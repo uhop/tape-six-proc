@@ -1,0 +1,31 @@
+{
+  "name": "tape-six-proc",
+  "version": "0.12.0",
+  "description": "Helper for TAP the test harness for the modern JavaScript (ES6) to run tests in separate processes.",
+  "type": "module",
+  "bin": {
+    "tape6-proc": "bin/tape6-proc.js"
+  },
+  "keywords": [
+    "tap",
+    "test",
+    "harness",
+    "assert",
+    "process"
+  ],
+  "author": "Eugene Lazutkin <eugene.lazutkin@gmail.com> (https://www.lazutkin.com)",
+  "funding": "https://github.com/sponsors/uhop",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uhop/tape-six-proc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/uhop/tape-six-proc/issues"
+  },
+  "homepage": "https://github.com/uhop/tape-six-proc#readme",
+  "dependencies": {
+    "dollar-shell": "^1.1.0",
+    "tape-six": "^0.12.2"
+  }
+}
