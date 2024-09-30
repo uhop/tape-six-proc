@@ -26,6 +26,6 @@
   "homepage": "https://github.com/uhop/tape-six-proc#readme",
   "dependencies": {
     "dollar-shell": "^1.1.0",
-    "tape-six": "^0.12.2"
+    "tape-six": "^0.12.3"
   }
 }
