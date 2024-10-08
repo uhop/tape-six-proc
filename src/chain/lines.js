@@ -15,7 +15,7 @@ export const lines = () => {
       controller.enqueue(rest);
       rest = '';
     }
-  })
+  });
 };
 
 export default lines;
