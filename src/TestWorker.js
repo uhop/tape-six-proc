@@ -21,12 +21,19 @@ export default class TestWorker extends EventServer {
   makeTask(fileName) {
     const testName = new URL(fileName, baseName),
       id = String(++this.counter),
-      worker = spawn([currentExecPath(), ...runFileArgs, fileURLToPath(testName)], {
-        stdin: 'ignore',
-        stdout: 'pipe',
-        stderr: 'inherit',
-        env: {...process.env, TAPE6_TEST: id, TAPE6_JSONL: 'Y'}
-      });
+      worker = spawn(
+        [
+          currentExecPath(),
+          ...runFileArgs.concat((this.options.runFileArgs || []).filter(x => x)),
+          fileURLToPath(testName)
+        ],
+        {
+          stdin: 'ignore',
+          stdout: 'pipe',
+          stderr: 'inherit',
+          env: {...process.env, TAPE6_TEST: id, TAPE6_JSONL: 'Y'}
+        }
+      );
     this.idToWorker[id] = worker;
     const self = this;
     worker.stdout

@@ -19,6 +19,7 @@ const options = {},
 
 let flags = '',
   parallel = '',
+  runFileArgs = [],
   files = [];
 
 const showSelf = () => {
@@ -67,6 +68,12 @@ const config = () => {
       }
       continue;
     }
+    if (arg == '-r' || arg == '--runFileArgs') {
+      if (++i < process.argv.length) {
+        runFileArgs.push(process.argv[i]);
+      }
+      continue;
+    }
     files.push(arg);
   }
 
@@ -89,6 +96,8 @@ const config = () => {
     parallel = 0;
   }
   if (!parallel) parallel = navigator.hardwareConcurrency;
+
+  options.runFileArgs = runFileArgs;
 };
 
 const init = async () => {
