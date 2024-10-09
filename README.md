@@ -22,6 +22,7 @@ has the same usage as `tape6`.
 
 The most recent releases:
 
+* 1.0.0 *The first official release.*
 * 0.12.1 *Updated dependencies, which included fixes for Deno.*
 * 0.12.0 *Initial release.*
 
