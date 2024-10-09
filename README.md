@@ -22,6 +22,7 @@ has the same usage as `tape6`.
 
 The most recent releases:
 
+* 0.12.1 *Updated dependencies, which included fixes for Deno.*
 * 0.12.0 *Initial release.*
 
 For more info consult full [release notes](https://github.com/uhop/tape-six-proc/wiki/Release-notes).
