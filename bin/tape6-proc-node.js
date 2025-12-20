@@ -3,6 +3,7 @@
 'use strict';
 
 import process from 'node:process';
+import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 
 import {resolveTests, resolvePatterns} from 'tape-six/utils/config.js';
@@ -95,7 +96,18 @@ const config = () => {
   } else {
     parallel = 0;
   }
-  if (!parallel) parallel = navigator.hardwareConcurrency;
+  if (!parallel) {
+    if (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) {
+      parallel = navigator.hardwareConcurrency;
+    } else {
+      try {
+        parallel = os.availableParallelism();
+      } catch (e) {
+        void e;
+        parallel = 1;
+      }
+    }
+  }
 
   options.runFileArgs = runFileArgs;
 };
