@@ -35,7 +35,13 @@ export default class TestWorker extends EventServer {
           stdin: 'ignore',
           stdout: 'pipe',
           stderr: 'pipe',
-          env: {...process.env, TAPE6_TEST: id, TAPE6_JSONL: 'Y', TAPE6_JSONL_PREFIX: this.prefix}
+          env: {
+            ...process.env,
+            TAPE6_TEST: id,
+            TAPE6_REPORTER: '',
+            TAPE6_JSONL: 'Y',
+            TAPE6_JSONL_PREFIX: this.prefix
+          }
         }
       );
     this.idToWorker[id] = worker;
@@ -66,15 +72,7 @@ export default class TestWorker extends EventServer {
       .pipeTo(
         new WritableStream({
           write(msg) {
-            try {
-              self.report(id, msg);
-            } catch (error) {
-              if (!(error instanceof StopTest)) throw error;
-            }
-            if (msg.type === 'end' && msg.test === 0) {
-              self.close(id);
-              return;
-            }
+            self.report(id, msg);
           }
         })
       );
