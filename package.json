@@ -6,6 +6,10 @@
   "bin": {
     "tape6-proc": "bin/tape6-proc.js"
   },
+  "scripts": {
+    "lint": "prettier --check .",
+    "lint:fix": "prettier --write ."
+  },
   "keywords": [
     "tap",
     "test",
