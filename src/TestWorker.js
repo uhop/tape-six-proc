@@ -2,6 +2,7 @@ import process from 'node:process';
 import os from 'node:os';
 import {sep} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
+import crypto from 'node:crypto';
 
 import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 
@@ -9,7 +10,8 @@ import {StopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
 
 import lines from './chain/lines.js';
-import parse from './chain/jsonl-parse.js';
+import parse from './chain/parse-prefixed-jsonl.js';
+import wrap from './chain/wrap-lines.js';
 
 const baseName = pathToFileURL(process.cwd() + sep);
 
@@ -18,6 +20,7 @@ export default class TestWorker extends EventServer {
     super(reporter, numberOfTasks, options);
     this.counter = 0;
     this.idToWorker = {};
+    this.prefix = crypto.randomUUID();
   }
   makeTask(fileName) {
     const testName = new URL(fileName, baseName),
@@ -31,8 +34,8 @@ export default class TestWorker extends EventServer {
         {
           stdin: 'ignore',
           stdout: 'pipe',
-          stderr: 'inherit',
-          env: {...process.env, TAPE6_TEST: id, TAPE6_JSONL: 'Y'}
+          stderr: 'pipe',
+          env: {...process.env, TAPE6_TEST: id, TAPE6_JSONL: 'Y', TAPE6_JSONL_PREFIX: this.prefix}
         }
       );
     this.idToWorker[id] = worker;
@@ -40,7 +43,26 @@ export default class TestWorker extends EventServer {
     worker.stdout
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
-      .pipeThrough(parse())
+      .pipeThrough(parse(this.prefix))
+      .pipeTo(
+        new WritableStream({
+          write(msg) {
+            try {
+              self.report(id, msg);
+            } catch (error) {
+              if (!(error instanceof StopTest)) throw error;
+            }
+            if (msg.type === 'end' && msg.test === 0) {
+              self.close(id);
+              return;
+            }
+          }
+        })
+      );
+    worker.stderr
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(lines())
+      .pipeThrough(wrap('stderr'))
       .pipeTo(
         new WritableStream({
           write(msg) {
