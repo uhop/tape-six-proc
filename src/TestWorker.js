@@ -46,36 +46,52 @@ export default class TestWorker extends EventServer {
       );
     this.idToWorker[id] = worker;
     const self = this;
-    worker.stdout
-      .pipeThrough(new TextDecoderStream())
-      .pipeThrough(lines())
-      .pipeThrough(parse(this.prefix))
-      .pipeTo(
-        new WritableStream({
-          write(msg) {
-            try {
-              self.report(id, msg);
-            } catch (error) {
-              if (!(error instanceof StopTest)) throw error;
+    const stdoutFinished = new Promise ((resolve, reject) => {
+      worker.stdout
+        .pipeThrough(new TextDecoderStream())
+        .pipeThrough(lines())
+        .pipeThrough(parse(this.prefix))
+        .pipeTo(
+          new WritableStream({
+            write(msg) {
+              try {
+                self.report(id, msg);
+              } catch (error) {
+                if (!(error instanceof StopTest)) {
+                  reject(error);
+                  throw error;
+                }
+              }
+              // if (msg.type === 'end' && msg.test === 0) {
+              //   self.close(id);
+              //   return;
+              // }
+            },
+            flush() {
+              resolve();
             }
-            if (msg.type === 'end' && msg.test === 0) {
-              self.close(id);
-              return;
-            }
-          }
-        })
-      );
-    worker.stderr
-      .pipeThrough(new TextDecoderStream())
-      .pipeThrough(lines())
-      .pipeThrough(wrap('stderr'))
-      .pipeTo(
+          })
+        );
+    });
+    const stderrFinished = new Promise (resolve => {
+      worker.stderr
+        .pipeThrough(new TextDecoderStream())
+        .pipeThrough(lines())
+        .pipeThrough(wrap('stderr'))
+        .pipeTo(
         new WritableStream({
           write(msg) {
             self.report(id, msg);
+          },
+          flush() {
+            resolve();
           }
         })
       );
+    });
+    Promise.all([stdoutFinished, stderrFinished, worker.finished]).then(() => {
+      self.close(id);
+    });
     return id;
   }
   destroyTask(id) {
