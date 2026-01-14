@@ -1,5 +1,3 @@
-'use strict';
-
 export const lines = () => {
   let rest = '';
   return new TransformStream({
@@ -12,7 +10,7 @@ export const lines = () => {
       for (const line of lines) controller.enqueue(line);
     },
     flush(controller) {
-      controller.enqueue(rest);
+      if (rest) controller.enqueue(rest);
       rest = '';
     }
   });

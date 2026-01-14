@@ -1,5 +1,3 @@
-'use strict';
-
 export const wrap = (type = 'stdout') =>
   new TransformStream({
     transform(line, controller) {
