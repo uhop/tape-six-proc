@@ -38,7 +38,8 @@ export default class TestWorker extends EventServer {
           env: {
             ...process.env,
             TAPE6_TEST: id,
-            TAPE6_REPORTER: '',
+            TAPE6_TEST_FILE_NAME: fileName,
+            TAPE6_REPORTER: 'jsonl',
             TAPE6_JSONL: 'Y',
             TAPE6_JSONL_PREFIX: this.prefix
           }
@@ -46,7 +47,7 @@ export default class TestWorker extends EventServer {
       );
     this.idToWorker[id] = worker;
     const self = this;
-    const stdoutFinished = new Promise ((resolve, reject) => {
+    const stdoutFinished = new Promise((resolve, reject) => {
       worker.stdout
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(lines())
@@ -73,21 +74,21 @@ export default class TestWorker extends EventServer {
           })
         );
     });
-    const stderrFinished = new Promise (resolve => {
+    const stderrFinished = new Promise(resolve => {
       worker.stderr
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(lines())
         .pipeThrough(wrap('stderr'))
         .pipeTo(
-        new WritableStream({
-          write(msg) {
-            self.report(id, msg);
-          },
-          flush() {
-            resolve();
-          }
-        })
-      );
+          new WritableStream({
+            write(msg) {
+              self.report(id, msg);
+            },
+            flush() {
+              resolve();
+            }
+          })
+        );
     });
     Promise.all([stdoutFinished, stderrFinished, worker.finished]).then(() => {
       self.close(id);
