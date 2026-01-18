@@ -26,11 +26,7 @@ export default class TestWorker extends EventServer {
     const testName = new URL(fileName, baseName),
       id = String(++this.counter),
       worker = spawn(
-        [
-          currentExecPath(),
-          ...runFileArgs.concat((this.options.runFileArgs || []).filter(x => x)),
-          fileURLToPath(testName)
-        ],
+        [currentExecPath(), ...runFileArgs, ...this.options.runFileArgs, fileURLToPath(testName)],
         {
           stdin: 'ignore',
           stdout: 'pipe',
