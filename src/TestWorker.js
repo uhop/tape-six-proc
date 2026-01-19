@@ -9,9 +9,9 @@ import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 import {StopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
 
-import lines from './chain/lines.js';
-import parse from './chain/parse-prefixed-jsonl.js';
-import wrap from './chain/wrap-lines.js';
+import lines from './streams/lines.js';
+import parse from './streams/parse-prefixed-jsonl.js';
+import wrap from './streams/wrap-lines.js';
 
 const baseName = pathToFileURL(process.cwd() + sep);
 
