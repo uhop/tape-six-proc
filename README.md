@@ -27,7 +27,5 @@ The most recent releases:
 - 1.0.2 _Fixed concurrency detection. Updated dependencies._
 - 1.0.1 _Updated dependencies._
 - 1.0.0 _The first official release._
-- 0.12.1 _Updated dependencies, which included fixes for Deno._
-- 0.12.0 _Initial release._
 
 For more info consult full [release notes](https://github.com/uhop/tape-six-proc/wiki/Release-notes).
