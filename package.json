@@ -1,6 +1,6 @@
 {
   "name": "tape-six-proc",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Helper for TAP the test harness for the modern JavaScript (ES6) to run tests in separate processes.",
   "type": "module",
   "bin": {
@@ -33,7 +33,7 @@
   "homepage": "https://github.com/uhop/tape-six-proc#readme",
   "dependencies": {
     "dollar-shell": "^1.1.0",
-    "tape-six": "^1.4.0"
+    "tape-six": "^1.4.1"
   },
   "tape6": {
     "tests": [

@@ -22,6 +22,7 @@ has the same usage as `tape6`.
 
 The most recent releases:
 
+- 1.1.1 _Updated dependencies._
 - 1.1.0 _Added support for stdout/stderr and `tape-six` 1.3.4._
 - 1.0.2 _Fixed concurrency detection. Updated dependencies._
 - 1.0.1 _Updated dependencies._
