@@ -55,6 +55,7 @@ export default class TestWorker extends EventServer {
               self.report(id, msg);
             } catch (error) {
               if (!(error instanceof StopTest)) {
+                stdoutDeferred.reject(error);
                 throw error;
               }
             }
@@ -79,7 +80,7 @@ export default class TestWorker extends EventServer {
           }
         })
       );
-    Promise.all([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).finally(() => self.close(id));
+    Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => self.close(id));
     return id;
   }
   destroyTask(id) {
