@@ -8,6 +8,7 @@ import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 
 import {StopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
+import getDeferred from 'tape-six/utils/getDeferred.js';
 
 import lines from './streams/lines.js';
 import parse from './streams/parse-prefixed-jsonl.js';
@@ -42,6 +43,7 @@ export default class TestWorker extends EventServer {
       );
     this.idToWorker[id] = worker;
     const self = this;
+    const stdoutDeferred = getDeferred();
     worker.stdout
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
@@ -56,9 +58,13 @@ export default class TestWorker extends EventServer {
                 throw error;
               }
             }
+          },
+          close() {
+            stdoutDeferred.resolve();
           }
         })
       );
+    const stderrDeferred = getDeferred();
     worker.stderr
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
@@ -67,10 +73,13 @@ export default class TestWorker extends EventServer {
         new WritableStream({
           write(msg) {
             self.report(id, msg);
+          },
+          close() {
+            stderrDeferred.resolve();
           }
         })
       );
-    worker.exited.finally(() => self.close(id));
+    Promise.all([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).finally(() => self.close(id));
     return id;
   }
   destroyTask(id) {
