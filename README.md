@@ -22,6 +22,7 @@ has the same usage as `tape6`.
 
 The most recent releases:
 
+- 1.1.3 _Updated dependencies._
 - 1.1.2 _Fixed bug with Deno (spawned process can end before processing streams (stdout/stderr))._
 - 1.1.1 _Updated dependencies._
 - 1.1.0 _Added support for stdout/stderr and `tape-six` 1.3.4._
