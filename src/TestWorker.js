@@ -81,9 +81,27 @@ export default class TestWorker extends EventServer {
           }
         })
       );
-    Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() =>
-      self.close(id)
-    );
+    Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => {
+      const reason = [];
+      if (worker.exitCode) {
+        reason.push(`exit code: ${worker.exitCode}`);
+      }
+      if (worker.signalCode) {
+        reason.push(`signal: ${worker.signalCode}`);
+      }
+      if (reason.length) {
+        self.report(id, {
+          type: 'assert',
+          name: 'process has failed, ' + reason.join(', '),
+          test: 0,
+          marker: new Error(),
+          time: 0,
+          operator: 'fail',
+          fail: true
+        });
+      }
+      self.close(id);
+    });
     return id;
   }
   destroyTask(id) {
