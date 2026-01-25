@@ -22,6 +22,7 @@ has the same usage as `tape6`.
 
 The most recent releases:
 
+- 1.1.6 _Updated dependencies._
 - 1.1.5 _Updated dependencies._
 - 1.1.4 _Updated dependencies._
 - 1.1.3 _Updated dependencies._
