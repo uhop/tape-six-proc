@@ -34,6 +34,7 @@ export default class TestWorker extends EventServer {
           stderr: 'pipe',
           env: {
             ...process.env,
+            TAPE6_FLAGS: this.options.flags,
             TAPE6_TEST: id,
             TAPE6_TEST_FILE_NAME: fileName,
             TAPE6_JSONL: 'Y',
@@ -80,7 +81,9 @@ export default class TestWorker extends EventServer {
           }
         })
       );
-    Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => self.close(id));
+    Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() =>
+      self.close(id)
+    );
     return id;
   }
   destroyTask(id) {
