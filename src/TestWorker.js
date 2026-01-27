@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 
 import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 
-import {StopTest} from 'tape-six/State.js';
+import {isStopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
 import getDeferred from 'tape-six/utils/getDeferred.js';
 
@@ -55,7 +55,7 @@ export default class TestWorker extends EventServer {
             try {
               self.report(id, msg);
             } catch (error) {
-              if (!(error instanceof StopTest)) {
+              if (!isStopTest(error)) {
                 stdoutDeferred.reject(error);
                 throw error;
               }
@@ -82,23 +82,24 @@ export default class TestWorker extends EventServer {
         })
       );
     Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => {
-      const reason = [];
-      if (worker.exitCode) {
-        reason.push(`exit code: ${worker.exitCode}`);
-      }
-      if (worker.signalCode) {
-        reason.push(`signal: ${worker.signalCode}`);
-      }
-      if (reason.length) {
-        self.report(id, {
-          type: 'assert',
-          name: 'process has failed, ' + reason.join(', '),
-          test: 0,
-          marker: new Error(),
-          time: 0,
-          operator: 'fail',
-          fail: true
-        });
+      if (!self.reporter.state || !self.reporter.state.failed) {
+        const reason = [];
+        if (worker.exitCode) {
+          reason.push(`exit code: ${worker.exitCode}`);
+        }
+        if (worker.signalCode) {
+          reason.push(`signal: ${worker.signalCode}`);
+        }
+        if (reason.length) {
+          self.report(id, {
+            name: 'process has failed, ' + reason.join(', '),
+            test: 0,
+            marker: new Error(),
+            operator: 'error',
+            fail: true
+          });
+          self.report(id, {type: 'terminated', test: 0, name: 'FILE: /' + fileName});
+        }
       }
       self.close(id);
     });

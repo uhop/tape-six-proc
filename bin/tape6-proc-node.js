@@ -9,8 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {resolveTests, resolvePatterns} from 'tape-six/utils/config.js';
 
 import {getReporter, setReporter} from 'tape-six/test.js';
-import State, {StopTest} from 'tape-six/State.js';
-import TapReporter from 'tape-six/TapReporter.js';
+import TapReporter from 'tape-six/reporters/TapReporter.js';
 import {selectTimer} from 'tape-six/utils/timer.js';
 
 import TestWorker from '../src/TestWorker.js';
@@ -115,19 +114,14 @@ const init = async () => {
   let reporter = getReporter();
   if (!reporter) {
     if (process.env.TAPE6_JSONL) {
-      const {JSONLReporter} = await import('tape-six/JSONLReporter.js'),
-        jsonlReporter = new JSONLReporter(options);
-      reporter = jsonlReporter.report.bind(jsonlReporter);
+      const {JSONLReporter} = await import('tape-six/reporters/JSONLReporter.js');
+      reporter = new JSONLReporter(options);
     } else if (!process.env.TAPE6_TAP) {
-      const {TTYReporter} = await import('tape-six/TTYReporter.js'),
-        ttyReporter = new TTYReporter(options);
-      ttyReporter.testCounter = -2;
-      ttyReporter.technicalDepth = 1;
-      reporter = ttyReporter.report.bind(ttyReporter);
+      const {TTYReporter} = await import('tape-six/reporters/TTYReporter.js');
+      reporter = new TTYReporter(options);
     }
     if (!reporter) {
-      const tapReporter = new TapReporter({useJson: true});
-      reporter = tapReporter.report.bind(tapReporter);
+      reporter = new TapReporter({useJson: true});
     }
     setReporter(reporter);
   }
@@ -145,14 +139,6 @@ const init = async () => {
   }
 };
 
-const safeEmit = rootState => event => {
-  try {
-    rootState.emit(event);
-  } catch (error) {
-    if (!(error instanceof StopTest)) throw error;
-  }
-};
-
 const main = async () => {
   config();
   await init();
@@ -162,25 +148,25 @@ const main = async () => {
     console.error('UNHANDLED ERROR:', origin, error)
   );
 
-  const rootState = new State(null, {callback: getReporter(), failOnce: options.failOnce}),
-    worker = new TestWorker(safeEmit(rootState), parallel, options);
+  const reporter = getReporter(),
+    worker = new TestWorker(reporter, parallel, options);
 
-  rootState.emit({type: 'test', test: 0, time: rootState.timer.now()});
+  reporter.report({type: 'test', test: 0, name: ''});
 
   await new Promise(resolve => {
     worker.done = () => resolve();
     worker.execute(files);
   });
 
-  rootState.emit({
+  const hasFailed = reporter.state && reporter.state.failed > 0;
+
+  reporter.report({
     type: 'end',
     test: 0,
-    time: rootState.timer.now(),
-    fail: rootState.failed > 0,
-    data: rootState
+    fail: hasFailed
   });
 
-  process.exit(rootState.failed > 0 ? 1 : 0);
+  process.exit(hasFailed ? 1 : 0);
 };
 
 main().catch(error => console.error('ERROR:', error));
