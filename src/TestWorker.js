@@ -91,13 +91,17 @@ export default class TestWorker extends EventServer {
           reason.push(`signal: ${worker.signalCode}`);
         }
         if (reason.length) {
-          self.report(id, {
-            name: 'process has failed, ' + reason.join(', '),
-            test: 0,
-            marker: new Error(),
-            operator: 'error',
-            fail: true
-          });
+          try {
+            self.report(id, {
+              name: 'process has failed, ' + reason.join(', '),
+              test: 0,
+              marker: new Error(),
+              operator: 'error',
+              fail: true
+            });
+          } catch (error) {
+            if (!isStopTest(error)) throw error;
+          }
           self.report(id, {type: 'terminated', test: 0, name: 'FILE: /' + fileName});
         }
       }
