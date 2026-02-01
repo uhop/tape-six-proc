@@ -39,5 +39,8 @@
     "tests": [
       "/tests/test-*.*js"
     ]
+  },
+  "devDependencies": {
+    "chai": "^6.2.2"
   }
 }
