@@ -8,7 +8,7 @@ import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 
 import {isStopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
-import getDeferred from 'tape-six/utils/getDeferred.js';
+import makeDeferred from 'tape-six/utils/makeDeferred.js';
 
 import lines from './streams/lines.js';
 import parse from './streams/parse-prefixed-jsonl.js';
@@ -44,7 +44,7 @@ export default class TestWorker extends EventServer {
       );
     this.idToWorker[id] = worker;
     const self = this;
-    const stdoutDeferred = getDeferred();
+    const stdoutDeferred = makeDeferred();
     worker.stdout
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
@@ -66,7 +66,7 @@ export default class TestWorker extends EventServer {
           }
         })
       );
-    const stderrDeferred = getDeferred();
+    const stderrDeferred = makeDeferred();
     worker.stderr
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())

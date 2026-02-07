@@ -1,6 +1,6 @@
 {
   "name": "tape-six-proc",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Helper for TAP the test harness for the modern JavaScript (ES6) to run tests in separate processes.",
   "type": "module",
   "bin": {
@@ -9,9 +9,9 @@
   "scripts": {
     "lint": "prettier --check .",
     "lint:fix": "prettier --write .",
-    "test": "node ./bin/tape6-proc.js",
-    "test:bun": "bun run ./bin/tape6-proc.js",
-    "test:deno": "deno run -A ./bin/tape6-proc.js -r --allow-read -r --allow-env"
+    "test": "node ./bin/tape6-proc.js --flags FO",
+    "test:bun": "bun run ./bin/tape6-proc.js --flags FO",
+    "test:deno": "deno run -A ./bin/tape6-proc.js -r --allow-read -r --allow-env --flags FO"
   },
   "keywords": [
     "tap",
@@ -32,8 +32,8 @@
   },
   "homepage": "https://github.com/uhop/tape-six-proc#readme",
   "dependencies": {
-    "dollar-shell": "^1.1.7",
-    "tape-six": "^1.5.1"
+    "dollar-shell": "^1.1.8",
+    "tape-six": "^1.7.0"
   },
   "tape6": {
     "tests": [
