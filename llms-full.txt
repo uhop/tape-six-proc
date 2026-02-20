@@ -1,0 +1,236 @@
+# tape-six-proc
+
+> A helper for [tape-six](https://github.com/uhop/tape-six) that runs test files in separate processes (subprocesses) instead of worker threads. Works with Node, Deno, and Bun. Supports TypeScript natively without transpilation. The npm package name is `tape-six-proc` and the CLI command is `tape6-proc`.
+
+- Process isolation: each test file runs in its own subprocess
+- Cross-runtime: Node, Deno, and Bun with the same test files
+- TypeScript without transpilation: runs `.ts` test files natively on modern Node, Deno, and Bun
+- Drop-in replacement for `tape6` (worker-thread runner)
+- Same configuration format as `tape-six`
+- Parallel execution with configurable concurrency
+- TAP, TTY (colored), and JSONL output formats
+
+## Install
+
+```bash
+npm i -D tape-six-proc
+```
+
+## Quick start
+
+Write a test (`tests/test-example.js`):
+
+```js
+import test from 'tape-six';
+
+test('example', t => {
+  t.ok(true, 'truthy');
+  t.equal(1 + 1, 2, 'math works');
+  t.deepEqual([1, 2], [1, 2], 'arrays match');
+});
+```
+
+Run it directly:
+
+```bash
+node tests/test-example.js
+```
+
+Or run all configured tests via processes:
+
+```bash
+tape6-proc --flags FO
+```
+
+## CLI: tape6-proc
+
+Runs test files in parallel, each in its own subprocess.
+
+```bash
+tape6-proc [--flags FLAGS] [--par N] [--runFileArgs ARGS] [tests...]
+```
+
+### Options
+
+- `--flags FLAGS` (`-f`) — output control flags (see Supported flags below).
+- `--par N` (`-p`) — number of parallel processes. Default: all CPU cores (via `os.availableParallelism()` or `navigator.hardwareConcurrency`).
+- `--runFileArgs ARGS` (`-r`) — extra arguments passed to the spawned interpreter. Can be specified multiple times. Mainly used for Deno permissions.
+- `--self` — prints the absolute path to `tape6-proc.js` and exits. Used in cross-runtime scripts.
+- Positional arguments: test file glob patterns. If none given, reads from configuration.
+
+### Examples
+
+```bash
+# Run all configured tests
+tape6-proc --flags FO
+
+# Run specific test files
+tape6-proc tests/test-foo.js tests/test-bar.js
+
+# Limit parallelism
+tape6-proc --par 4 --flags FO
+
+# Pass Deno permissions to spawned processes
+tape6-proc -r --allow-read -r --allow-env --flags FO
+```
+
+## Cross-runtime usage
+
+`tape6-proc` is a Node CLI by default. For Bun and Deno, use the `--self` flag to get the script path:
+
+```json
+{
+  "scripts": {
+    "test": "tape6-proc --flags FO",
+    "test:node": "tape6-proc --flags FO",
+    "test:bun": "bun run `tape6-proc --self` --flags FO",
+    "test:deno": "deno run -A `tape6-proc --self` --flags FO -r -A"
+  }
+}
+```
+
+### Deno permissions
+
+Deno requires explicit permissions. Use `-r` (alias for `--runFileArgs`) to pass them to each spawned test process:
+
+```bash
+# All permissions
+deno run -A `tape6-proc --self` -r -A
+
+# Fine-grained permissions
+deno run -A `tape6-proc --self` -r --allow-read -r --allow-env
+```
+
+Note: the first `-A` is for the `tape6-proc` process itself; the `-r` flags are forwarded to spawned test processes.
+
+## Supported flags
+
+Flags are a string of characters. Uppercase = enabled, lowercase = disabled.
+
+- `F` — Failures only: show only failed tests.
+- `T` — show Time for each test.
+- `B` — show Banner with summary.
+- `D` — show Data of failed tests.
+- `O` — fail Once: stop at first failure.
+- `N` — show assert Number.
+- `M` — Monochrome: no colors.
+- `C` — don't Capture console output.
+- `H` — Hide streams and console output.
+
+Usage:
+
+```bash
+tape6-proc --flags FO
+TAPE6_FLAGS=FO node tests/test-example.js
+```
+
+## Configuration
+
+Configuration is read from `tape6.json` or the `"tape6"` section of `package.json` (same format as `tape-six`):
+
+```json
+{
+  "tape6": {
+    "tests": ["/tests/test-*.*js"],
+    "cli": ["/tests/test-*.cjs"]
+  }
+}
+```
+
+Environment-specific subsections (`node`, `deno`, `bun`) are supported. The runner auto-detects the current runtime and uses the appropriate subsection.
+
+## Environment variables
+
+- `TAPE6_FLAGS` — flags string (combined with `--flags` CLI argument).
+- `TAPE6_PAR` — number of parallel processes (overridden by `--par`).
+- `TAPE6_TAP` — force TAP reporter (any non-empty value).
+- `TAPE6_JSONL` — force JSONL reporter (any non-empty value).
+- `TAPE6_TEST` — set by the runner: unique ID for each spawned test process.
+- `TAPE6_TEST_FILE_NAME` — set by the runner: file name of the current test.
+- `TAPE6_JSONL_PREFIX` — set by the runner: UUID prefix for JSONL lines in stdout.
+
+## Architecture
+
+### Entry point
+
+`bin/tape6-proc.js` is the CLI entry point:
+
+- With `--self`: prints its own absolute path and exits.
+- Otherwise: delegates to `bin/tape6-proc-node.js`.
+
+### Main CLI (`bin/tape6-proc-node.js`)
+
+1. Parses CLI arguments (`--flags`, `--par`, `--runFileArgs`, positional test patterns).
+2. Selects reporter: TTY (default for terminals), TAP, or JSONL (based on environment variables).
+3. Resolves test files from configuration or CLI patterns using `tape-six/utils/config.js`.
+4. Creates a `TestWorker` instance and executes all test files.
+5. Reports final results and exits with code 0 (success) or 1 (failures).
+
+### TestWorker (`src/TestWorker.js`)
+
+Extends `EventServer` from `tape-six`. Manages parallel subprocess execution:
+
+- **`constructor(reporter, numberOfTasks, options)`** — initializes with a reporter, concurrency limit, and options. Generates a UUID prefix for JSONL parsing.
+- **`makeTask(fileName)`** — spawns a child process for a test file using `dollar-shell`. Sets up stream pipelines for stdout and stderr. Returns a task ID.
+- **`destroyTask(id)`** — cleans up a completed task.
+- **`getConcurrency()`** — static method, returns available CPU cores.
+
+### Stream pipeline
+
+Each spawned process has two stream pipelines:
+
+**stdout pipeline:**
+```
+process.stdout → TextDecoderStream → lines → parse-prefixed-jsonl → report
+```
+
+- `lines` (`src/streams/lines.js`): TransformStream that splits text into individual lines.
+- `parse-prefixed-jsonl` (`src/streams/parse-prefixed-jsonl.js`): TransformStream that recognizes lines starting with the UUID prefix, parses them as JSON, and passes through non-prefixed lines as `{type: 'stdout', name: line}` objects.
+
+**stderr pipeline:**
+```
+process.stderr → TextDecoderStream → lines → wrap-lines → report
+```
+
+- `wrap-lines` (`src/streams/wrap-lines.js`): TransformStream that wraps each line as `{type: 'stderr', name: line}`.
+
+### Process lifecycle
+
+1. Process is spawned with environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, `TAPE6_JSONL_PREFIX`.
+2. The test file runs and outputs JSONL-prefixed lines to stdout.
+3. After the process exits, `TestWorker` checks exit code and signal.
+4. Non-zero exit codes are reported as errors with a `{type: 'terminated'}` event.
+5. The task is closed and the next queued test file starts.
+
+## Dependencies
+
+- **`tape-six`** — the core test library. Imports: `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`, `utils/config.js`, `test.js`, reporters (`TapReporter`, `TTYReporter`, `JSONLReporter`), `utils/timer.js`.
+- **`dollar-shell`** — cross-runtime process spawning. Imports: `spawn`, `currentExecPath`, `runFileArgs`.
+
+## Writing tests
+
+Tests are standard `tape-six` tests. See the [tape-six documentation](https://github.com/uhop/tape-six/wiki) for the full API.
+
+```js
+import test from 'tape-six';
+
+test('arithmetic', t => {
+  t.equal(2 + 2, 4, 'addition');
+  t.ok(10 > 5, 'comparison');
+});
+
+test('async operation', async t => {
+  const result = await fetchData();
+  t.ok(result, 'got result');
+  t.equal(result.status, 200, 'status is 200');
+});
+```
+
+Test files should be directly executable: `node tests/test-foo.js` or `node tests/test-foo.ts`
+
+## Links
+
+- Docs: https://github.com/uhop/tape-six-proc/wiki
+- npm: https://www.npmjs.com/package/tape-six-proc
+- tape-six: https://github.com/uhop/tape-six
+- tape-six LLM reference: https://github.com/uhop/tape-six/blob/master/llms.txt

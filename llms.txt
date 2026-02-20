@@ -1,0 +1,107 @@
+# tape-six-proc
+
+> Helper for [tape-six](https://github.com/uhop/tape-six) that runs test files in separate processes instead of worker threads. Works with Node, Deno, and Bun. Supports TypeScript natively without transpilation.
+
+## Install
+
+```bash
+npm i -D tape-six-proc
+```
+
+## Quick start
+
+1. Write tests using `tape-six`:
+
+```js
+import test from 'tape-six';
+
+test('my test', async t => {
+  t.ok(true, 'truthy value');
+  t.equal(1 + 1, 2, 'addition works');
+});
+```
+
+2. Configure tests in `package.json`:
+
+```json
+{
+  "scripts": {
+    "test": "tape6-proc --flags FO"
+  },
+  "tape6": {
+    "tests": ["/tests/test-*.*js"]
+  }
+}
+```
+
+3. Run: `npm test`
+
+## Why use tape-six-proc?
+
+- **Process isolation** — each test file runs in its own subprocess, preventing shared state leaks.
+- **Cross-runtime** — works with Node, Deno, and Bun using the same test files.
+- **TypeScript without transpilation** — runs `.ts` test files natively on modern Node, Deno, and Bun.
+- **Drop-in replacement** — uses the same configuration and test format as `tape6` (worker-thread runner).
+
+## CLI: tape6-proc
+
+```bash
+tape6-proc [--flags FLAGS] [--par N] [--runFileArgs ARGS] [tests...]
+```
+
+### Options
+
+- `--flags FLAGS` (`-f`) — output control flags (same as tape6: F=failures only, T=time, B=banner, D=data, O=fail once, N=assert number, M=monochrome, C=don't capture console, H=hide streams).
+- `--par N` (`-p`) — number of parallel processes (default: all CPU cores).
+- `--runFileArgs ARGS` (`-r`) — extra arguments passed to the spawned interpreter. Can be used multiple times. Mainly for Deno permissions.
+- `--self` — prints the path to `tape6-proc.js` (for cross-runtime scripts).
+- No arguments: runs tests from configuration.
+
+### Cross-runtime usage
+
+```json
+{
+  "scripts": {
+    "test": "tape6-proc --flags FO",
+    "test:bun": "bun run `tape6-proc --self` --flags FO",
+    "test:deno": "deno run -A `tape6-proc --self` --flags FO -r -A"
+  }
+}
+```
+
+### Deno permissions
+
+Use `--runFileArgs` (`-r`) to pass permissions to spawned test processes:
+
+```bash
+deno run -A `tape6-proc --self` -r --allow-read -r --allow-env
+```
+
+## Configuration
+
+Same as `tape-six`. Reads from `tape6.json` or the `"tape6"` section of `package.json`:
+
+```json
+{
+  "tape6": {
+    "tests": ["/tests/test-*.*js"]
+  }
+}
+```
+
+Environment-specific subsections: `node`, `deno`, `bun`.
+
+## Environment variables
+
+- `TAPE6_FLAGS` — flags string.
+- `TAPE6_PAR` — number of parallel processes.
+- `TAPE6_TAP` — force TAP reporter.
+- `TAPE6_JSONL` — force JSONL reporter.
+- `TAPE6_TEST_FILE_NAME` — set by the runner to identify the current test file.
+
+## Links
+
+- Docs: https://github.com/uhop/tape-six-proc/wiki
+- npm: https://www.npmjs.com/package/tape-six-proc
+- tape-six: https://github.com/uhop/tape-six
+- Full LLM reference: https://github.com/uhop/tape-six-proc/blob/master/llms-full.txt

@@ -1,7 +1,7 @@
 {
   "name": "tape-six-proc",
   "version": "1.2.2",
-  "description": "Helper for TAP the test harness for the modern JavaScript (ES6) to run tests in separate processes.",
+  "description": "Helper for tape-six to run tests in separate processes. Works with Node, Deno, and Bun. Supports TypeScript without transpilation.",
   "type": "module",
   "bin": {
     "tape6-proc": "bin/tape6-proc.js"
@@ -18,7 +18,19 @@
     "test",
     "harness",
     "assert",
-    "process"
+    "process",
+    "unit-test",
+    "testing",
+    "test-runner",
+    "esm",
+    "es-modules",
+    "deno",
+    "bun",
+    "nodejs",
+    "cross-runtime",
+    "subprocess",
+    "isolated-process",
+    "typescript"
   ],
   "author": "Eugene Lazutkin <eugene.lazutkin@gmail.com> (https://www.lazutkin.com)",
   "funding": "https://github.com/sponsors/uhop",
@@ -31,6 +43,15 @@
     "url": "https://github.com/uhop/tape-six-proc/issues"
   },
   "homepage": "https://github.com/uhop/tape-six-proc#readme",
+  "github": "http://github.com/uhop/tape-six-proc",
+  "llms": "https://raw.githubusercontent.com/uhop/tape-six-proc/master/llms.txt",
+  "llmsFull": "https://raw.githubusercontent.com/uhop/tape-six-proc/master/llms-full.txt",
+  "files": [
+    "bin",
+    "src",
+    "llms.txt",
+    "llms-full.txt"
+  ],
   "dependencies": {
     "dollar-shell": "^1.1.8",
     "tape-six": "^1.7.0"
