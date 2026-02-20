@@ -89,6 +89,7 @@ LLM-friendly documentation is available:
 
 The most recent releases:
 
+- 1.2.3 _Updated dependencies, cleaned up docs, added AI-friendly links and TS info._
 - 1.2.2 _Synchronized the implementation with `tape-six` 1.7.0._
 - 1.2.1 _Synchronized the implementation with `tape-six` 1.5.1._
 - 1.2.0 _Updated dependencies and synchronized the implementation with `tape-six` 1.5.0._
