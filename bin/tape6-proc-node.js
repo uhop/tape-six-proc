@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 
-'use strict';
-
 import process from 'node:process';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
 
-import {resolveTests, resolvePatterns} from 'tape-six/utils/config.js';
+import {
+  getReporterFileName,
+  getReporterType,
+  resolveTests,
+  resolvePatterns,
+  runtime
+} from 'tape-six/utils/config.js';
 
 import {getReporter, setReporter} from 'tape-six/test.js';
-import TapReporter from 'tape-six/reporters/TapReporter.js';
 import {selectTimer} from 'tape-six/utils/timer.js';
 
 import TestWorker from '../src/TestWorker.js';
@@ -53,7 +56,7 @@ const config = () => {
     const arg = process.argv[i];
     if (arg == '-f' || arg == '--flags') {
       if (++i < process.argv.length) {
-        flags = process.argv[i];
+        flags += process.argv[i];
       }
       continue;
     }
@@ -111,31 +114,26 @@ const config = () => {
 };
 
 const init = async () => {
-  let reporter = getReporter();
-  if (!reporter) {
-    if (process.env.TAPE6_JSONL) {
-      const {JSONLReporter} = await import('tape-six/reporters/JSONLReporter.js');
-      reporter = new JSONLReporter(options);
-    } else if (!process.env.TAPE6_TAP) {
-      const {TTYReporter} = await import('tape-six/reporters/TTYReporter.js');
-      reporter = new TTYReporter(options);
-    }
-    if (!reporter) {
-      reporter = new TapReporter({useJson: true});
-    }
-    setReporter(reporter);
+  const currentReporter = getReporter();
+  if (!currentReporter) {
+    const reporterType = getReporterType(),
+      reporterFile = getReporterFileName(reporterType),
+      CustomReporter = (await import('tape-six/reporters/' + reporterFile)).default,
+      hasColors = !(
+        options.monochrome ||
+        process.env.NO_COLOR ||
+        process.env.NODE_DISABLE_COLORS ||
+        process.env.FORCE_COLOR === '0'
+      ),
+      customOptions = reporterType === 'tap' ? {useJson: true, hasColors} : {...options, hasColors},
+      customReporter = new CustomReporter(customOptions);
+    setReporter(customReporter);
   }
 
   if (files.length) {
     files = await resolvePatterns(rootFolder, files);
   } else {
-    let type = 'node';
-    if (typeof Deno == 'object') {
-      type = 'deno';
-    } else if (typeof Bun == 'object') {
-      type = 'bun';
-    }
-    files = await resolveTests(rootFolder, type);
+    files = await resolveTests(rootFolder, runtime.name);
   }
 };
 
@@ -148,10 +146,15 @@ const main = async () => {
     console.error('UNHANDLED ERROR:', origin, error)
   );
 
+  if (!files.length) {
+    console.log('No files found.');
+    process.exit(1);
+  }
+
   const reporter = getReporter(),
     worker = new TestWorker(reporter, parallel, options);
 
-  reporter.report({type: 'test', test: 0, name: ''});
+  reporter.report({type: 'test', test: 0});
 
   await new Promise(resolve => {
     worker.done = () => resolve();
