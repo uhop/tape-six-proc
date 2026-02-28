@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 
 import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 
+import {isStopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
 import makeDeferred from 'tape-six/utils/makeDeferred.js';
 
