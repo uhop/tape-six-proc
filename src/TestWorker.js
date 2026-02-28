@@ -6,7 +6,6 @@ import crypto from 'node:crypto';
 
 import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
 
-import {isStopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
 import makeDeferred from 'tape-six/utils/makeDeferred.js';
 
@@ -91,17 +90,13 @@ export default class TestWorker extends EventServer {
           reason.push(`signal: ${worker.signalCode}`);
         }
         if (reason.length) {
-          try {
-            self.report(id, {
-              name: 'process has failed, ' + reason.join(', '),
-              test: 0,
-              marker: new Error(),
-              operator: 'error',
-              fail: true
-            });
-          } catch (error) {
-            if (!isStopTest(error)) throw error;
-          }
+          self.report(id, {
+            name: 'process has failed, ' + reason.join(', '),
+            test: 0,
+            marker: new Error(),
+            operator: 'error',
+            fail: true
+          });
           self.report(id, {type: 'terminated', test: 0, name: 'FILE: /' + fileName});
         }
       }
