@@ -4,15 +4,13 @@ Thank you for your interest in contributing!
 
 ## Getting started
 
-This project uses a git submodule. Clone and install:
+This project uses a git submodule for the wiki. Clone and install:
 
 ```bash
 git clone --recursive git@github.com:uhop/tape-six-proc.git
 cd tape-six-proc
 npm install
 ```
-
-See [Working on this project](https://github.com/uhop/tape-six-proc/wiki/Working-on-this-project) for details on the architecture.
 
 ## Development workflow
 

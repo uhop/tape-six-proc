@@ -51,9 +51,9 @@ tape6-proc [--flags FLAGS] [--par N] [--runFileArgs ARGS] [tests...]
 
 ### Options
 
-- `--flags FLAGS` (`-f`) — output control flags (same as tape6: F=failures only, T=time, B=banner, D=data, O=fail once, N=assert number, M=monochrome, C=don't capture console, H=hide streams).
+- `--flags FLAGS` (`-f`) — output control flags (same as tape6: F=failures only, T=time, B=banner, D=data, O=fail once, N=assert number, M=monochrome, C=don't capture console, H=hide streams). Can be specified multiple times.
 - `--par N` (`-p`) — number of parallel processes (default: all CPU cores).
-- `--runFileArgs ARGS` (`-r`) — extra arguments passed to the spawned interpreter. Can be used multiple times. Mainly for Deno permissions.
+- `--runFileArgs ARGS` (`-r`) — extra arguments for the spawned interpreter. Can be specified multiple times. Mainly for Deno permissions.
 - `--self` — prints the path to `tape6-proc.js` (for cross-runtime scripts).
 - No arguments: runs tests from configuration.
 
@@ -98,7 +98,7 @@ Environment-specific subsections: `node`, `deno`, `bun`.
 - `TAPE6_TAP` — force TAP reporter.
 - `TAPE6_JSONL` — force JSONL reporter.
 - `TAPE6_MIN` — force minimal reporter.
-- `TAPE6_TEST_FILE_NAME` — set by the runner to identify the current test file.
+- `TAPE6_TEST_FILE_NAME` — set by the runner: file name of the current test.
 
 ## Links
 

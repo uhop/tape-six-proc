@@ -10,9 +10,9 @@ and supports TypeScript natively without transpilation.
 ## Why?
 
 The standard `tape6` runner uses worker threads. `tape6-proc` spawns each test file
-in its own subprocess instead, providing full process isolation. This prevents shared
-state leaks and is useful when tests need a clean environment. TypeScript test files
-(`.ts`) are run natively by modern Node, Deno, and Bun &mdash; no transpilation needed.
+in its own subprocess instead, providing full process isolation. This prevents shared-state
+leaks and is useful when tests need a clean environment. TypeScript test files (`.ts`)
+run natively on modern Node, Deno, and Bun &mdash; no transpilation needed.
 
 ## Install
 
@@ -66,11 +66,10 @@ npm test
 
 ## Docs
 
-The documentation can be found in the [wiki](https://github.com/uhop/tape-six-proc/wiki).
+See the [wiki](https://github.com/uhop/tape-six-proc/wiki) for full documentation.
 `tape-six` has its own [wiki](https://github.com/uhop/tape-six/wiki).
 
-`tape-six-proc` uses the same test configuration as `tape-six`. The utility `tape6-proc`
-has the same usage as `tape6`.
+`tape-six-proc` uses the same test configuration and CLI conventions as `tape-six`.
 
 ### Command-line utilities
 
@@ -104,4 +103,4 @@ The most recent releases:
 - 1.0.1 _Updated dependencies._
 - 1.0.0 _The first official release._
 
-For more info consult full [release notes](https://github.com/uhop/tape-six-proc/wiki/Release-notes).
+See the full [release notes](https://github.com/uhop/tape-six-proc/wiki/Release-notes) for details.

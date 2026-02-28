@@ -49,7 +49,7 @@ tape-six-proc/
 - **ES modules** throughout (`"type": "module"` in package.json).
 - **No transpilation** — code runs directly in all target runtimes. TypeScript test files (`.ts`) are also supported natively by modern Node, Deno, and Bun.
 - **Prettier** for formatting (see `.prettierrc`).
-- No semicolons are enforced by Prettier config — follow existing patterns.
+- No semicolons — enforced by Prettier config (see `.prettierrc`).
 - Imports at the top of files, using `import` syntax.
 - The package name is `tape-six-proc` but the CLI command is `tape6-proc`.
 

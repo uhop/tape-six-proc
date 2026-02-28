@@ -205,7 +205,7 @@ process.stderr → TextDecoderStream → lines → wrap-lines → report
 
 ## Dependencies
 
-- **`tape-six`** — the core test library. Imports: `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`, `utils/config.js`, `test.js`, reporters (`TapReporter`, `TTYReporter`, `JSONLReporter`), `utils/timer.js`.
+- **`tape-six`** — the core test library. Imports: `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`, `utils/config.js`, `test.js`, reporters (`TTYReporter`, `TapReporter`, `JSONLReporter`, `MinReporter`), `utils/timer.js`.
 - **`dollar-shell`** — cross-runtime process spawning. Imports: `spawn`, `currentExecPath`, `runFileArgs`.
 
 ## Writing tests
