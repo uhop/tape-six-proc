@@ -56,7 +56,7 @@ tape-six-proc/
 ## Architecture
 
 - `bin/tape6-proc.js` is the CLI entry point. With `--self` it prints its own path (for cross-runtime usage). Otherwise it delegates to `bin/tape6-proc-node.js`.
-- `bin/tape6-proc-node.js` parses CLI arguments, sets up the reporter (TTY/TAP/JSONL), resolves test files from configuration, and runs them via `TestWorker`.
+- `bin/tape6-proc-node.js` parses CLI arguments, sets up the reporter (TTY/TAP/JSONL/Min), resolves test files from configuration, and runs them via `TestWorker`.
 - `TestWorker` (in `src/TestWorker.js`) extends `EventServer` from `tape-six`. It spawns each test file as a child process using [dollar-shell](https://www.npmjs.com/package/dollar-shell), pipes stdout through a JSONL parser, and pipes stderr as wrapped lines.
 - Each spawned process gets environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, and `TAPE6_JSONL_PREFIX` (a UUID prefix for JSONL lines).
 - Stream pipeline per process: `stdout → TextDecoder → lines → parse-prefixed-jsonl → report`. stderr: `stderr → TextDecoder → lines → wrap-lines → report`.

@@ -8,7 +8,7 @@
 - Drop-in replacement for `tape6` (worker-thread runner)
 - Same configuration format as `tape-six`
 - Parallel execution with configurable concurrency
-- TAP, TTY (colored), and JSONL output formats
+- TAP, TTY (colored), JSONL, and minimal output formats
 
 ## Install
 
@@ -145,6 +145,7 @@ Environment-specific subsections (`node`, `deno`, `bun`) are supported. The runn
 - `TAPE6_PAR` — number of parallel processes (overridden by `--par`).
 - `TAPE6_TAP` — force TAP reporter (any non-empty value).
 - `TAPE6_JSONL` — force JSONL reporter (any non-empty value).
+- `TAPE6_MIN` — force minimal reporter (any non-empty value).
 - `TAPE6_TEST` — set by the runner: unique ID for each spawned test process.
 - `TAPE6_TEST_FILE_NAME` — set by the runner: file name of the current test.
 - `TAPE6_JSONL_PREFIX` — set by the runner: UUID prefix for JSONL lines in stdout.
@@ -161,7 +162,7 @@ Environment-specific subsections (`node`, `deno`, `bun`) are supported. The runn
 ### Main CLI (`bin/tape6-proc-node.js`)
 
 1. Parses CLI arguments (`--flags`, `--par`, `--runFileArgs`, positional test patterns).
-2. Selects reporter: TTY (default for terminals), TAP, or JSONL (based on environment variables).
+2. Selects reporter: TTY (default for terminals), TAP, JSONL, or Min (based on environment variables).
 3. Resolves test files from configuration or CLI patterns using `tape-six/utils/config.js`.
 4. Creates a `TestWorker` instance and executes all test files.
 5. Reports final results and exits with code 0 (success) or 1 (failures).

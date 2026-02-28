@@ -97,6 +97,7 @@ Environment-specific subsections: `node`, `deno`, `bun`.
 - `TAPE6_PAR` — number of parallel processes.
 - `TAPE6_TAP` — force TAP reporter.
 - `TAPE6_JSONL` — force JSONL reporter.
+- `TAPE6_MIN` — force minimal reporter.
 - `TAPE6_TEST_FILE_NAME` — set by the runner to identify the current test file.
 
 ## Links
