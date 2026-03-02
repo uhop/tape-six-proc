@@ -1,5 +1,4 @@
 import process from 'node:process';
-import os from 'node:os';
 import {sep} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
@@ -17,7 +16,7 @@ import wrap from './streams/wrap-lines.js';
 const baseName = pathToFileURL(process.cwd() + sep);
 
 export default class TestWorker extends EventServer {
-  constructor(reporter, numberOfTasks = TestWorker.getConcurrency(), options) {
+  constructor(reporter, numberOfTasks, options) {
     super(reporter, numberOfTasks, options);
     this.counter = 0;
     this.idToWorker = {};
@@ -111,17 +110,5 @@ export default class TestWorker extends EventServer {
       // worker.kill();
       delete this.idToWorker[id];
     }
-  }
-  static getConcurrency() {
-    if (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) {
-      return navigator.hardwareConcurrency;
-    }
-    try {
-      return os.availableParallelism();
-    } catch (e) {
-      void e;
-      // squelch
-    }
-    return 1;
   }
 }
