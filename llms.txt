@@ -57,6 +57,7 @@ tape6-proc [--flags FLAGS] [--par N] [--runFileArgs ARGS] [tests...]
 - `--info` — prints runtime, reporter, parallelism, flags, and test files, then exits.
 - `--self` — prints the path to `tape6-proc.js` (for cross-runtime scripts).
 - No arguments: runs tests from configuration.
+- Options accept `--flags FO` or `--flags=FO`. The `=` form does not support quoting.
 
 ### Cross-runtime usage
 
