@@ -55,6 +55,7 @@ tape6-proc [--flags FLAGS] [--par N] [--runFileArgs ARGS] [tests...]
 - `--flags FLAGS` (`-f`) — output control flags (see Supported flags below).
 - `--par N` (`-p`) — number of parallel processes. Default: all CPU cores (via `os.availableParallelism()` or `navigator.hardwareConcurrency`).
 - `--runFileArgs ARGS` (`-r`) — extra arguments passed to the spawned interpreter. Can be specified multiple times. Mainly used for Deno permissions.
+- `--info` — prints runtime, reporter, parallelism, flags, and test files, then exits.
 - `--self` — prints the absolute path to `tape6-proc.js` and exits. Used in cross-runtime scripts.
 - Positional arguments: test file glob patterns. If none given, reads from configuration.
 
@@ -161,9 +162,11 @@ Environment-specific subsections (`node`, `deno`, `bun`) are supported. The runn
 
 ### Main CLI (`bin/tape6-proc-node.js`)
 
-1. Parses CLI arguments (`--flags`, `--par`, `--runFileArgs`, positional test patterns).
-2. Selects reporter: TTY (default for terminals), TAP, JSONL, or Min (based on environment variables).
-3. Resolves test files from configuration or CLI patterns using `tape-six/utils/config.js`.
+Delegates argument parsing, reporter setup, and file resolution to `tape-six/utils/config.js`:
+
+1. Calls `getOptions()` to parse CLI arguments (`--flags`, `--par`, `--runFileArgs`, `--info`, positional test patterns).
+2. Calls `initReporter()` to select the reporter: TTY (default for terminals), TAP, JSONL, or Min (based on environment variables).
+3. Calls `initFiles()` to resolve test files from configuration or CLI patterns.
 4. Creates a `TestWorker` instance and executes all test files.
 5. Reports final results and exits with code 0 (success) or 1 (failures).
 
@@ -174,7 +177,6 @@ Extends `EventServer` from `tape-six`. Manages parallel subprocess execution:
 - **`constructor(reporter, numberOfTasks, options)`** — initializes with a reporter, concurrency limit, and options. Generates a UUID prefix for JSONL parsing.
 - **`makeTask(fileName)`** — spawns a child process for a test file using `dollar-shell`. Sets up stream pipelines for stdout and stderr. Returns a task ID.
 - **`destroyTask(id)`** — cleans up a completed task.
-- **`getConcurrency()`** — static method, returns available CPU cores.
 
 ### Stream pipeline
 
@@ -205,7 +207,7 @@ process.stderr → TextDecoderStream → lines → wrap-lines → report
 
 ## Dependencies
 
-- **`tape-six`** — the core test library. Imports: `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`, `utils/config.js`, `test.js`, reporters (`TTYReporter`, `TapReporter`, `JSONLReporter`, `MinReporter`), `utils/timer.js`.
+- **`tape-six`** — the core test library. Imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`), `test.js` (`getReporter`, `setReporter`), `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
 - **`dollar-shell`** — cross-runtime process spawning. Imports: `spawn`, `currentExecPath`, `runFileArgs`.
 
 ## Writing tests
