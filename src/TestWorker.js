@@ -37,7 +37,10 @@ export default class TestWorker extends EventServer {
             TAPE6_TEST: id,
             TAPE6_TEST_FILE_NAME: fileName,
             TAPE6_JSONL: 'Y',
-            TAPE6_JSONL_PREFIX: this.prefix
+            TAPE6_JSONL_PREFIX: this.prefix,
+            TAPE6_MIN: '',
+            TAPE6_TAP: '',
+            TAPE6_TTY: ''
           }
         }
       );
