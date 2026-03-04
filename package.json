@@ -57,7 +57,7 @@
   ],
   "dependencies": {
     "dollar-shell": "^1.1.10",
-    "tape-six": "^1.7.7"
+    "tape-six": "^1.7.8"
   },
   "tape6": {
     "tests": [
