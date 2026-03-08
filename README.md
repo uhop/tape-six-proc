@@ -88,6 +88,7 @@ LLM-friendly documentation is available:
 
 The most recent releases:
 
+- 1.2.6 _Updated dependencies. Added AI agent rule files. Improved workflows._
 - 1.2.5 _Synchronized with `tape-six` 1.7.6+. Simplified CLI via shared config utilities. Added `--info` flag. Fixed Deno stdout flush._
 - 1.2.4 _Synchronized with `tape-six` 1.7.4. Added Min reporter support. Improved docs and npm keywords._
 - 1.2.3 _Updated dependencies, cleaned up docs, added AI-friendly links and TS info._
