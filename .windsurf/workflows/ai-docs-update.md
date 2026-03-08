@@ -18,7 +18,9 @@ Update all AI-facing files after changes to the CLI, architecture, or project st
    - Full CLI reference with all options, environment variables, and examples.
    - Include any new stream pipeline changes or architecture updates.
 5. Update `AGENTS.md` if critical rules, commands, or architecture quick reference changed.
-6. Update `wiki/Home.md` if the overview needs to reflect new features.
-7. Update `wiki/Utility-‐-tape6‐proc.md` if CLI options or cross-runtime usage changed.
-8. Review `prompts/doc.md` for any needed updates to documentation generation guidelines.
-9. Track progress with the todo list and provide a summary when done.
+6. Sync `.windsurfrules`, `.cursorrules`, `.clinerules` if `AGENTS.md` critical rules or code style changed:
+   - These three files should be identical copies.
+7. Update `wiki/Home.md` if the overview needs to reflect new features.
+8. Update `wiki/Utility-‐-tape6‐proc.md` if CLI options or cross-runtime usage changed.
+9. Review `prompts/doc.md` for any needed updates to documentation generation guidelines.
+10. Track progress with the todo list and provide a summary when done.

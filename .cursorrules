@@ -1,0 +1,48 @@
+<!-- Canonical source: AGENTS.md — keep this file in sync -->
+# tape-six-proc — AI Agent Rules
+
+## Project identity
+
+tape-six-proc is a helper for tape-six that runs test files in separate processes (subprocesses) instead of worker threads. Works with Node, Deno, and Bun. Supports TypeScript natively without transpilation. The npm package name is `tape-six-proc` and the CLI command is `tape6-proc`.
+
+## Critical rules
+
+- **ESM-only.** The project is `"type": "module"`. Use `import`/`export` syntax.
+- **No transpilation.** Code runs directly in all target runtimes.
+- **Do not modify or delete test expectations** without understanding why they changed.
+- **Do not add comments or remove comments** unless explicitly asked.
+- Do not add dependencies unless absolutely necessary.
+
+## Code style
+
+- Prettier for formatting (see `.prettierrc`).
+- No semicolons — enforced by Prettier config.
+- Imports at top of file, using `import` syntax.
+- The package name is `tape-six-proc` but the CLI command is `tape6-proc`.
+
+## Architecture quick reference
+
+- `bin/tape6-proc.js` — CLI entry point. `--self` prints its path; otherwise delegates to `tape6-proc-node.js`.
+- `bin/tape6-proc-node.js` — delegates arg parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). Adds `--runFileArgs` and `--info`.
+- `src/TestWorker.js` — extends `EventServer` from `tape-six`. Spawns child processes via `dollar-shell`, pipes stdout/stderr through stream parsers.
+
+## Verification commands
+
+- `npm test` — run the full test suite (Node)
+- `npm run test:bun` — run with Bun
+- `npm run test:deno` — run with Deno
+- `npm run lint` — Prettier format check
+
+## File layout
+
+- CLI: `bin/tape6-proc.js`, `bin/tape6-proc-node.js`
+- Core: `src/TestWorker.js`
+- Streams: `src/streams/lines.js`, `src/streams/parse-prefixed-jsonl.js`, `src/streams/wrap-lines.js`
+- Tests: `tests/test-*.js`
+- Wiki docs: `wiki/` (git submodule)
+
+## When reading the codebase
+
+- Start with `AGENTS.md` for full setup, commands, and architecture.
+- Wiki markdown files in `wiki/` contain detailed usage docs.
+- `bin/tape6-proc-node.js` and `src/TestWorker.js` are the core modules — read them first.
