@@ -56,8 +56,8 @@
     "llms-full.txt"
   ],
   "dependencies": {
-    "dollar-shell": "^1.1.11",
-    "tape-six": "^1.7.10"
+    "dollar-shell": "^1.1.12",
+    "tape-six": "^1.7.11"
   },
   "tape6": {
     "tests": [
