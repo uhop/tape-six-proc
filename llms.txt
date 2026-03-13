@@ -56,6 +56,8 @@ tape6-proc [--flags FLAGS] [--par N] [--runFileArgs ARGS] [tests...]
 - `--runFileArgs ARGS` (`-r`) — extra arguments for the spawned interpreter. Can be specified multiple times. Mainly for Deno permissions.
 - `--info` — prints runtime, reporter, parallelism, flags, and test files, then exits.
 - `--self` — prints the path to `tape6-proc.js` (for cross-runtime scripts).
+- `--help` (`-h`) — show help message and exit.
+- `--version` (`-v`) — show version and exit.
 - No arguments: runs tests from configuration.
 - Options accept `--flags FO` or `--flags=FO`. The `=` form does not support quoting.
 
