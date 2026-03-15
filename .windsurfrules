@@ -23,7 +23,7 @@ tape-six-proc is a helper for tape-six that runs test files in separate processe
 ## Architecture quick reference
 
 - `bin/tape6-proc.js` — CLI entry point. `--self` prints its path; otherwise delegates to `tape6-proc-node.js`.
-- `bin/tape6-proc-node.js` — delegates arg parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). Adds `--runFileArgs` and `--info`.
+- `bin/tape6-proc-node.js` — delegates arg parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). Adds `--runFileArgs`, `--info`, `--help`, and `--version`.
 - `src/TestWorker.js` — extends `EventServer` from `tape-six`. Spawns child processes via `dollar-shell`, pipes stdout/stderr through stream parsers.
 
 ## Verification commands

@@ -56,7 +56,7 @@ tape-six-proc/
 ## Architecture
 
 - `bin/tape6-proc.js` is the CLI entry point. With `--self` it prints its own path (for cross-runtime usage). Otherwise it delegates to `bin/tape6-proc-node.js`.
-- `bin/tape6-proc-node.js` delegates argument parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). It adds the `--runFileArgs` (`-r`) and `--info` options, then runs tests via `TestWorker`.
+- `bin/tape6-proc-node.js` delegates argument parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). It adds `--runFileArgs` (`-r`), `--info`, `--help` (`-h`), and `--version` (`-v`) options, then runs tests via `TestWorker`.
 - `TestWorker` (in `src/TestWorker.js`) extends `EventServer` from `tape-six`. It spawns each test file as a child process using [dollar-shell](https://www.npmjs.com/package/dollar-shell), pipes stdout through a JSONL parser, and pipes stderr as wrapped lines.
 - Each spawned process gets environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, and `TAPE6_JSONL_PREFIX` (a UUID prefix for JSONL lines).
 - Stream pipeline per process: `stdout → TextDecoder → lines → parse-prefixed-jsonl → report`. stderr: `stderr → TextDecoder → lines → wrap-lines → report`.
@@ -64,7 +64,7 @@ tape-six-proc/
 
 ## Dependencies
 
-- **`tape-six`** — the core test library. `tape-six-proc` imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`), `test.js`, `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
+- **`tape-six`** — the core test library. `tape-six-proc` imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js`, `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
 - **`dollar-shell`** — cross-runtime process spawning (`spawn`, `currentExecPath`, `runFileArgs`).
 
 ## Writing tests

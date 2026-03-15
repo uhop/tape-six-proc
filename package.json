@@ -1,6 +1,6 @@
 {
   "name": "tape-six-proc",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Process-isolated test runner for tape-six. Runs each test file in its own subprocess. Works with Node, Deno, and Bun. Supports TypeScript without transpilation.",
   "type": "module",
   "bin": {
@@ -56,7 +56,7 @@
     "llms-full.txt"
   ],
   "dependencies": {
-    "dollar-shell": "^1.1.12",
+    "dollar-shell": "^1.1.13",
     "tape-six": "^1.7.12"
   },
   "tape6": {

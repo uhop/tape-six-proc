@@ -167,7 +167,7 @@ Environment-specific subsections (`node`, `deno`, `bun`) are supported. The runn
 
 Delegates argument parsing, reporter setup, and file resolution to `tape-six/utils/config.js`:
 
-1. Calls `getOptions()` to parse CLI arguments (`--flags`, `--par`, `--runFileArgs`, `--info`, positional test patterns).
+1. Calls `getOptions()` to parse CLI arguments (`--flags`, `--par`, `--runFileArgs`, `--info`, `--help`, `--version`, positional test patterns).
 2. Calls `initReporter()` to select the reporter: TTY (default for terminals), TAP, JSONL, or Min (based on environment variables).
 3. Calls `initFiles()` to resolve test files from configuration or CLI patterns.
 4. Creates a `TestWorker` instance and executes all test files.
@@ -210,7 +210,7 @@ process.stderr → TextDecoderStream → lines → wrap-lines → report
 
 ## Dependencies
 
-- **`tape-six`** — the core test library. Imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`), `test.js` (`getReporter`, `setReporter`), `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
+- **`tape-six`** — the core test library. Imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js` (`getReporter`, `setReporter`), `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
 - **`dollar-shell`** — cross-runtime process spawning. Imports: `spawn`, `currentExecPath`, `runFileArgs`.
 
 ## Writing tests
