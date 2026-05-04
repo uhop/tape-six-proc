@@ -23,34 +23,34 @@ export default class TestWorker extends EventServer {
     this.prefix = crypto.randomUUID();
   }
   makeTask(fileName) {
+    const self = /** @type {*} */ (this);
     const testName = new URL(fileName, baseName),
-      id = String(++this.counter),
+      id = String(++self.counter),
       worker = spawn(
-        [currentExecPath(), ...runFileArgs, ...this.options.runFileArgs, fileURLToPath(testName)],
+        [currentExecPath(), ...runFileArgs, ...self.options.runFileArgs, fileURLToPath(testName)],
         {
           stdin: 'ignore',
           stdout: 'pipe',
           stderr: 'pipe',
           env: {
             ...process.env,
-            TAPE6_FLAGS: this.options.flags,
+            TAPE6_FLAGS: self.options.flags,
             TAPE6_TEST: id,
             TAPE6_TEST_FILE_NAME: fileName,
             TAPE6_JSONL: 'Y',
-            TAPE6_JSONL_PREFIX: this.prefix,
+            TAPE6_JSONL_PREFIX: self.prefix,
             TAPE6_MIN: '',
             TAPE6_TAP: '',
             TAPE6_TTY: ''
           }
         }
       );
-    this.idToWorker[id] = worker;
-    const self = this;
+    self.idToWorker[id] = worker;
     const stdoutDeferred = makeDeferred();
     worker.stdout
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
-      .pipeThrough(parse(this.prefix))
+      .pipeThrough(parse(self.prefix))
       .pipeTo(
         new WritableStream({
           write(msg) {

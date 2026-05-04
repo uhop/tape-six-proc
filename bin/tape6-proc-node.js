@@ -102,7 +102,7 @@ const main = async () => {
   }
 
   const reporter = getReporter(),
-    worker = new TestWorker(reporter, options.parallel, options.flags);
+    worker = /** @type {*} */ (new TestWorker(reporter, options.parallel, options.flags));
 
   reporter.report({type: 'test', test: 0});
 
