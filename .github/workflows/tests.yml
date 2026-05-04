@@ -1,7 +1,11 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# This workflow runs the test suite across runtimes (Node, Bun, Deno) and operating
+# systems. Each runtime is a separate job so they execute in parallel and a failure
+# on one runtime/OS doesn't mask results from the others.
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Node.js CI
+name: CI
+permissions:
+  contents: read
 
 on:
   push:
@@ -10,11 +14,12 @@ on:
     branches: [master]
 
 jobs:
-  tests:
+  test-node:
     name: Node.js ${{matrix.node-version}} on ${{matrix.os}}
     runs-on: ${{matrix.os}}
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         node-version: [20, 22, 24, 25]
@@ -29,5 +34,49 @@ jobs:
       - run: |
           npm ci
           npm run build --if-present
-          npm run js-check --if-present
           npm test
+          npm run js-check --if-present
+
+  test-bun:
+    name: Bun on ${{matrix.os}}
+    runs-on: ${{matrix.os}}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+      - run: |
+          npm ci
+          npm run test:bun
+
+  test-deno:
+    name: Deno on ${{matrix.os}}
+    runs-on: ${{matrix.os}}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: |
+          npm ci
+          npm run test:deno
