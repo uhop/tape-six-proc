@@ -22,12 +22,14 @@ There is no build step.
 - **Test (Deno):** `npm run test:deno`
 - **Lint:** `npm run lint` (Prettier check)
 - **Lint fix:** `npm run lint:fix` (Prettier write)
+- **JS-check:** `npm run js-check` (TypeScript-as-linter via `tsconfig.check.json` — checks `.js` sources for unused vars / undeclared refs)
 
 ## Project structure
 
 ```
 tape-six-proc/
 ├── package.json          # Package config; "tape6" section configures test discovery
+├── tsconfig.check.json   # js-check config (TypeScript as linter for .js sources)
 ├── bin/
 │   ├── tape6-proc.js     # CLI entry point (--self flag or delegates to tape6-proc-node.js)
 │   └── tape6-proc-node.js # Main CLI: delegates to tape-six config utilities, runs TestWorker
@@ -38,8 +40,11 @@ tape-six-proc/
 │       ├── parse-prefixed-jsonl.js # TransformStream: parses prefixed JSONL from stdout
 │       └── wrap-lines.js         # TransformStream: wraps plain lines as {type, name} objects
 ├── tests/                # Test files (test-*.js)
-│   └── manual/           # Manual test files
+│   └── manual/           # Manual test files (hand-runnable demos; `tests/manual/test-chai.js` requires user-installed chai)
 ├── wiki/                 # GitHub wiki documentation (submodule)
+├── .github/
+│   ├── workflows/        # CI: separate jobs for Node × {ubuntu, windows, macOS} × {20, 22, 24, 25}, Bun × OS, Deno × OS
+│   └── dependabot.yml    # Tuned: grouped updates + `versioning-strategy: increase-if-necessary` (PRs only on out-of-range bumps)
 ├── README.md
 └── LICENSE
 ```
@@ -87,8 +92,13 @@ test('example', t => {
 ## Key conventions
 
 - Do not add dependencies unless absolutely necessary.
+- Do not modify or delete test expectations without understanding why they changed.
+- Do not add comments or remove comments unless explicitly asked.
 - The `--self` flag prints the path to `tape6-proc.js` for use in cross-runtime scripts (Bun, Deno).
 - The `--runFileArgs` (`-r`) flag passes extra arguments to the spawned interpreter (mainly for Deno permissions).
 - Wiki documentation lives in the `wiki/` submodule.
 - Environment variables use the `TAPE6_` prefix (shared with `tape-six`).
-- Configuration is read from `tape6.json` or the `"tape6"` section of `package.json` (same as `tape-six`).
+- Configuration is read from `tape6.json` or the `"tape6"` section of `package.json` (same as `tape-six`). Per-runtime subsections (`tape6.node` / `tape6.bun` / `tape6.deno` / `tape6.cli` / `tape6.browser`) are auto-resolved via tape-six's `runtime.name` detection — pin a test file to a specific runtime by globbing it under that key.
+- **BYO assertion / mock libraries.** No third-party assertion lib ships as a devDep. CI smoke-tests for the `AssertionError` rendering path use `node:assert` (`tests/test-assert.js`). `tests/manual/test-chai.js` is retained as a hand-runnable visual demo for users who want to see chai integration; users `npm install chai` ad-hoc when exercising it.
+- **`js-check` tooling**: `tsconfig.check.json` runs TypeScript-as-linter (`checkJs` + `noUnusedLocals` + `noUnusedParameters`) over `.js` sources in `bin/` and `src/`. Pure-Node-API only on the source side (`@types/node` is the only types entry); cross-runtime concerns are absorbed by the `dollar-shell` dependency and don't require `@types/bun` / `@types/deno` here.
+- **Dependabot** is tuned to skip PRs when a new version satisfies the declared caret range (only major bumps fire) and to bundle all matching updates per ecosystem into one PR per cycle. Security advisories are a separate, always-on channel and continue to fire regardless.

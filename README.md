@@ -88,6 +88,7 @@ LLM-friendly documentation is available:
 
 The most recent releases:
 
+- 1.2.9 _Added `js-check`, Bun + Deno CI, tuned dependabot. Updated dependencies._
 - 1.2.8 _Fixed Bun stdout flush bug. Added GitHub Actions CI. Updated dependencies._
 - 1.2.7 _Added `--help` and `--version` flags. Updated dependencies._
 - 1.2.6 _Updated dependencies. Added AI agent rule files. Improved workflows._
