@@ -22,5 +22,6 @@ Update all AI-facing files after changes to the CLI, architecture, or project st
    - These three files should be identical copies.
 7. Update `wiki/Home.md` if the overview needs to reflect new features.
 8. Update `wiki/Utility-‐-tape6‐proc.md` if CLI options or cross-runtime usage changed.
-9. Review `prompts/doc.md` for any needed updates to documentation generation guidelines.
+9. If wiki conventions or project link styles have changed, update the
+   `document-wiki-page` skill so future doc generations stay aligned.
 10. Track progress with the todo list and provide a summary when done.
