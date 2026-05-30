@@ -42,6 +42,7 @@ test('my test', async t => {
 - **Cross-runtime** — works with Node, Deno, and Bun using the same test files.
 - **TypeScript without transpilation** — runs `.ts` test files natively on modern Node, Deno, and Bun.
 - **Drop-in replacement** — uses the same configuration and test format as `tape6` (worker-thread runner).
+- **Early termination** — a control channel lets `failOnce` (flag `O`) stop in-flight workers and supports a per-worker time limit (`TAPE6_WORKER_TIMEOUT`); both drain cleanly (cleanup hooks run) with a force-kill backstop after `TAPE6_GRACE_TIMEOUT`.
 
 ## CLI: tape6-proc
 
@@ -102,6 +103,8 @@ Environment-specific subsections: `node`, `deno`, `bun`.
 - `TAPE6_TAP` — force TAP reporter.
 - `TAPE6_JSONL` — force JSONL reporter.
 - `TAPE6_MIN` — force minimal reporter.
+- `TAPE6_GRACE_TIMEOUT` — ms a worker may drain (cleanup, flush) after a `terminate` before it is force-killed. Default 5000.
+- `TAPE6_WORKER_TIMEOUT` — per-worker wall-clock deadline in ms; on expiry the worker is terminated. Default 0 (off).
 - `TAPE6_TEST_FILE_NAME` — set by the runner: file name of the current test.
 
 ## Links

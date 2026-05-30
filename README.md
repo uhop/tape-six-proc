@@ -14,6 +14,11 @@ in its own subprocess instead, providing full process isolation. This prevents s
 leaks and is useful when tests need a clean environment. TypeScript test files (`.ts`)
 run natively on modern Node, Deno, and Bun &mdash; no transpilation needed.
 
+A control channel lets the runner stop workers mid-run: `failOnce` (flag `O`) drains
+the test files still in flight, and `TAPE6_WORKER_TIMEOUT` sets a per-worker time limit.
+Both cancel cooperatively (cleanup hooks run) with a force-kill backstop after
+`TAPE6_GRACE_TIMEOUT`. See [Stopping tests early](https://github.com/uhop/tape-six-proc/wiki/Utility-%E2%80%90-tape6-proc#stopping-tests-early).
+
 ## Install
 
 ```bash

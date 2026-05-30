@@ -15,6 +15,8 @@ import wrap from './streams/wrap-lines.js';
 
 const baseName = pathToFileURL(process.cwd() + sep);
 
+const encoder = new TextEncoder();
+
 export default class TestWorker extends EventServer {
   constructor(reporter, numberOfTasks, options) {
     super(reporter, numberOfTasks, options);
@@ -29,7 +31,10 @@ export default class TestWorker extends EventServer {
       worker = spawn(
         [currentExecPath(), ...runFileArgs, ...self.options.runFileArgs, fileURLToPath(testName)],
         {
-          stdin: 'ignore',
+          // stdin is the control channel: the parent writes a line-delimited
+          // `terminate` and ends the stream to drive the child's exit. See
+          // dev-docs/worker-control-channel.md (tape-six).
+          stdin: 'pipe',
           stdout: 'pipe',
           stderr: 'pipe',
           env: {
@@ -39,13 +44,19 @@ export default class TestWorker extends EventServer {
             TAPE6_TEST_FILE_NAME: fileName,
             TAPE6_JSONL: 'Y',
             TAPE6_JSONL_PREFIX: self.prefix,
+            TAPE6_CONTROL: 'Y',
+            TAPE6_GRACE_TIMEOUT: String(self.graceTimeout),
             TAPE6_MIN: '',
             TAPE6_TAP: '',
             TAPE6_TTY: ''
           }
         }
       );
-    self.idToWorker[id] = worker;
+    // Per-task control-plane state. `endSeen` keys completion off *reading* the
+    // child's top-level `end` (not racing the child's own exit); `terminating`
+    // makes destroyTask idempotent; `graceTimer` is the force-kill backstop.
+    const task = {worker, endSeen: false, terminating: false, graceTimer: null};
+    self.idToWorker[id] = task;
     const stdoutDeferred = makeDeferred();
     worker.stdout
       .pipeThrough(new TextDecoderStream())
@@ -61,6 +72,13 @@ export default class TestWorker extends EventServer {
                 stdoutDeferred.reject(error);
                 throw error;
               }
+            }
+            // Normal completion: the parent has consumed the top-level `end`.
+            // Tell the child to exit (drain + EOF its control channel) — this is
+            // the parent-driven exit that closes the Bun flush race.
+            if (msg && msg.type === 'end' && msg.test === 0) {
+              task.endSeen = true;
+              self.destroyTask(id, 'done');
             }
           },
           close() {
@@ -84,7 +102,13 @@ export default class TestWorker extends EventServer {
         })
       );
     Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => {
-      if (!self.reporter.state || !self.reporter.state.failed) {
+      if (task.graceTimer) {
+        clearTimeout(task.graceTimer);
+        task.graceTimer = null;
+      }
+      // A premature exit (no top-level `end` read) is a crash or a force-killed
+      // hung child — surface it, unless a failure was already reported.
+      if (!task.endSeen && (!self.reporter.state || !self.reporter.state.failed)) {
         const reason = [];
         if (worker.exitCode) {
           reason.push(`exit code: ${worker.exitCode}`);
@@ -103,15 +127,41 @@ export default class TestWorker extends EventServer {
           self.report(id, {type: 'terminated', test: 0, name: 'FILE: /' + fileName});
         }
       }
+      delete self.idToWorker[id];
       self.close(id);
     });
     return id;
   }
-  destroyTask(id) {
-    const worker = this.idToWorker[id];
-    if (worker) {
-      // worker.kill();
-      delete this.idToWorker[id];
+  // Deliver `terminate` to one child: write the line-delimited command, then
+  // EOF the control channel. The child drains a running test (reporter
+  // .terminate() — cleanup hooks run) and exits on its own; the graceTimeout
+  // backstop force-kills a test that won't drain. Idempotent per task.
+  destroyTask(id, reason = 'done') {
+    const task = this.idToWorker[id];
+    if (!task || task.terminating) return;
+    task.terminating = true;
+    this.#sendTerminate(task.worker, reason);
+    task.graceTimer = setTimeout(() => this.#kill(id), this.graceTimeout);
+  }
+  async #sendTerminate(worker, reason) {
+    const stdin = worker.stdin;
+    if (!stdin) return;
+    try {
+      const writer = stdin.getWriter();
+      await writer.write(encoder.encode(JSON.stringify({cmd: 'terminate', reason}) + '\n'));
+      await writer.close();
+    } catch (e) {
+      void e; // child already gone / pipe closed
+    }
+  }
+  #kill(id) {
+    const task = this.idToWorker[id];
+    if (!task) return;
+    task.graceTimer = null;
+    try {
+      task.worker.kill();
+    } catch (e) {
+      void e;
     }
   }
 }

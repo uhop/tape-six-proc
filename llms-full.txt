@@ -9,6 +9,7 @@
 - Same configuration format as `tape-six`
 - Parallel execution with configurable concurrency
 - TAP, TTY (colored), JSONL, and minimal output formats
+- Worker control channel: `failOnce` stops in-flight workers, plus an optional per-worker time limit
 
 ## Install
 
@@ -115,7 +116,7 @@ Flags are a string of characters. Uppercase = enabled, lowercase = disabled.
 - `T` — show Time for each test.
 - `B` — show Banner with summary.
 - `D` — show Data of failed tests.
-- `O` — fail Once: stop at first failure.
+- `O` — fail Once: stop at first failure. Via the control channel this also drains the workers still in flight (cleanup hooks run), not just the file queue.
 - `N` — show assert Number.
 - `M` — Monochrome: no colors.
 - `C` — don't Capture console output.
@@ -150,9 +151,12 @@ Environment-specific subsections (`node`, `deno`, `bun`) are supported. The runn
 - `TAPE6_TAP` — force TAP reporter (any non-empty value).
 - `TAPE6_JSONL` — force JSONL reporter (any non-empty value).
 - `TAPE6_MIN` — force minimal reporter (any non-empty value).
+- `TAPE6_GRACE_TIMEOUT` — milliseconds a worker is given to drain (run cleanup hooks, flush) after a `terminate` before it is force-killed. Default 5000. Shared with `tape-six`.
+- `TAPE6_WORKER_TIMEOUT` — per-worker wall-clock deadline in milliseconds; on expiry the worker is terminated (drain → kill). Default 0 (disabled). Shared with `tape-six`.
 - `TAPE6_TEST` — set by the runner: unique ID for each spawned test process.
 - `TAPE6_TEST_FILE_NAME` — set by the runner: file name of the current test.
 - `TAPE6_JSONL_PREFIX` — set by the runner: UUID prefix for JSONL lines in stdout.
+- `TAPE6_CONTROL` — set by the runner: marks a spawned child as controlled, so the tape-six runtime opens the stdin control channel and stays alive after `end` until told to exit.
 
 ## Architecture
 
@@ -178,12 +182,12 @@ Delegates argument parsing, reporter setup, and file resolution to `tape-six/uti
 Extends `EventServer` from `tape-six`. Manages parallel subprocess execution:
 
 - **`constructor(reporter, numberOfTasks, options)`** — initializes with a reporter, concurrency limit, and options. Generates a UUID prefix for JSONL parsing.
-- **`makeTask(fileName)`** — spawns a child process for a test file using `dollar-shell`. Sets up stream pipelines for stdout and stderr. Returns a task ID.
-- **`destroyTask(id)`** — cleans up a completed task.
+- **`makeTask(fileName)`** — spawns a child process for a test file using `dollar-shell` (`stdin: 'pipe'` so it can be controlled). Sets up stream pipelines for stdout and stderr, marks completion when the child's top-level `end` is read, and reports premature exits. Returns a task ID.
+- **`destroyTask(id, reason)`** — the control-plane terminate. Writes a line-delimited `terminate` command to the child's stdin and EOFs it, then arms a `TAPE6_GRACE_TIMEOUT` deadline after which the child is force-killed (`worker.kill()`, SIGTERM). The base `EventServer` calls it with `reason` `'done'` (the worker finished — read its `end`), `'failOnce'` (a sibling tripped failOnce / bail), or `'timeout'` (the per-worker deadline). Idempotent per task.
 
 ### Stream pipeline
 
-Each spawned process has two stream pipelines:
+Each spawned process has two data-plane stream pipelines (worker → reporter) plus a stdin control plane (reporter → worker, carrying `terminate`):
 
 **stdout pipeline:**
 ```
@@ -202,15 +206,16 @@ process.stderr → TextDecoderStream → lines → wrap-lines → report
 
 ### Process lifecycle
 
-1. Process is spawned with environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, `TAPE6_JSONL_PREFIX`.
-2. The test file runs and outputs JSONL-prefixed lines to stdout.
-3. After the process exits, `TestWorker` checks exit code and signal.
-4. Non-zero exit codes are reported as errors with a `{type: 'terminated'}` event.
-5. The task is closed and the next queued test file starts.
+1. Process is spawned with environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, `TAPE6_JSONL_PREFIX`, `TAPE6_CONTROL=Y`, `TAPE6_GRACE_TIMEOUT`.
+2. The test file runs and outputs JSONL-prefixed lines to stdout. Marked by `TAPE6_CONTROL`, the tape-six runtime opens a stdin control channel and stays alive after emitting its top-level `end` — it no longer self-exits.
+3. **Normal completion** is keyed off the parent *reading* that top-level `end` (not racing the child's exit). The parent then issues `terminate` (drain + EOF stdin); the child exits and the next queued file starts. Because the child exits only after `end` has been consumed, the Bun stdout-flush bug (a dropped tail on self-exit) cannot occur.
+4. **Abort** (`failOnce` / bail, or a `TAPE6_WORKER_TIMEOUT` deadline) issues `terminate` to every in-flight worker. Each drains its running test through `reporter.terminate()` — `t.signal` fires, `finally` / `afterEach` / `afterAll` run — then exits, emitting its `end` as usual.
+5. **Force-kill backstop.** A worker that does not exit within `TAPE6_GRACE_TIMEOUT` of a `terminate` (a test hung in a non-signal-aware `await`) is killed with `worker.kill()` (SIGTERM).
+6. A premature exit — the child closes stdout without a top-level `end` (crash, bad import, force-kill) — is reported as an error with a `{type: 'terminated'}` event, including the exit code / signal, unless a failure was already reported.
 
 ## Dependencies
 
-- **`tape-six`** — the core test library. Imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js` (`getReporter`, `setReporter`), `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
+- **`tape-six`** — the core test library. Imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js` (`getReporter`, `setReporter`), `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`. The worker control channel additionally depends on tape-six's child-side listener (`src/utils/control-channel.js`, opened via `TAPE6_CONTROL`) and the `getGraceTimeout` / `getWorkerTimeout` config it injects through `getOptions`, so it requires a tape-six version that ships them.
 - **`dollar-shell`** — cross-runtime process spawning. Imports: `spawn`, `currentExecPath`, `runFileArgs`.
 
 ## Writing tests

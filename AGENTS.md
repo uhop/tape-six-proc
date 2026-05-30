@@ -62,14 +62,14 @@ tape-six-proc/
 
 - `bin/tape6-proc.js` is the CLI entry point. With `--self` it prints its own path (for cross-runtime usage). Otherwise it delegates to `bin/tape6-proc-node.js`.
 - `bin/tape6-proc-node.js` delegates argument parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). It adds `--runFileArgs` (`-r`), `--info`, `--help` (`-h`), and `--version` (`-v`) options, then runs tests via `TestWorker`.
-- `TestWorker` (in `src/TestWorker.js`) extends `EventServer` from `tape-six`. It spawns each test file as a child process using [dollar-shell](https://www.npmjs.com/package/dollar-shell), pipes stdout through a JSONL parser, and pipes stderr as wrapped lines.
-- Each spawned process gets environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, and `TAPE6_JSONL_PREFIX` (a UUID prefix for JSONL lines).
-- Stream pipeline per process: `stdout → TextDecoder → lines → parse-prefixed-jsonl → report`. stderr: `stderr → TextDecoder → lines → wrap-lines → report`.
-- Process exit codes and signals are checked after completion; non-zero exits are reported as errors.
+- `TestWorker` (in `src/TestWorker.js`) extends `EventServer` from `tape-six`. It spawns each test file as a child process using [dollar-shell](https://www.npmjs.com/package/dollar-shell), pipes stdout through a JSONL parser, pipes stderr as wrapped lines, and drives a stdin control channel.
+- Each spawned process gets environment variables: `TAPE6_FLAGS`, `TAPE6_TEST`, `TAPE6_TEST_FILE_NAME`, `TAPE6_JSONL=Y`, `TAPE6_JSONL_PREFIX` (a UUID prefix for JSONL lines), `TAPE6_CONTROL=Y` (marks a controlled child), and `TAPE6_GRACE_TIMEOUT` (the drain budget).
+- Stream pipeline per process: `stdout → TextDecoder → lines → parse-prefixed-jsonl → report`. stderr: `stderr → TextDecoder → lines → wrap-lines → report`. stdin carries the control plane (see below).
+- **Worker control channel.** The child is spawned with `stdin: 'pipe'`. To stop a worker the parent writes a line-delimited `terminate` command and EOFs stdin; the child (the tape-six runtime, which opens the channel when `TAPE6_CONTROL` is set) drains a running test through `reporter.terminate()` — its `t.signal` fires and cleanup hooks run — then exits. This makes `failOnce` (flag `O`) actually stop in-flight workers (not just stop scheduling new files), and enables a per-worker wall-clock deadline (`TAPE6_WORKER_TIMEOUT`). Completion is keyed off **reading the child's top-level `end`**, not racing the child's own exit — which also fixes the Bun stdout-flush bug, since the child now exits parent-driven after `end` has been consumed. A child that won't drain within `TAPE6_GRACE_TIMEOUT` (default 5000 ms) is force-killed (`SIGTERM`); a premature exit with no `end` is still reported as an error. The child-side listener lives in `tape-six` itself (`src/utils/control-channel.js`), so this requires a `tape-six` that ships it.
 
 ## Dependencies
 
-- **`tape-six`** — the core test library. `tape-six-proc` imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js`, `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`.
+- **`tape-six`** — the core test library. `tape-six-proc` imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js`, `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`. The worker control channel also relies on tape-six's child-side listener (`src/utils/control-channel.js`, opened via `TAPE6_CONTROL`) and its `getGraceTimeout` / `getWorkerTimeout` config — so it needs a `tape-six` version that ships them.
 - **`dollar-shell`** — cross-runtime process spawning (`spawn`, `currentExecPath`, `runFileArgs`).
 
 ## Writing tests
@@ -97,7 +97,7 @@ test('example', t => {
 - The `--self` flag prints the path to `tape6-proc.js` for use in cross-runtime scripts (Bun, Deno).
 - The `--runFileArgs` (`-r`) flag passes extra arguments to the spawned interpreter (mainly for Deno permissions).
 - Wiki documentation lives in the `wiki/` submodule.
-- Environment variables use the `TAPE6_` prefix (shared with `tape-six`).
+- Environment variables use the `TAPE6_` prefix (shared with `tape-six`). The control-channel tunables are `TAPE6_GRACE_TIMEOUT` (drain budget before force-kill, default 5000 ms) and `TAPE6_WORKER_TIMEOUT` (per-worker wall-clock deadline, default 0 = off); both are resolved by tape-six's `config.js` and inherited here via `getOptions`.
 - Configuration is read from `tape6.json` or the `"tape6"` section of `package.json` (same as `tape-six`). Per-runtime subsections (`tape6.node` / `tape6.bun` / `tape6.deno` / `tape6.cli` / `tape6.browser`) are auto-resolved via tape-six's `runtime.name` detection — pin a test file to a specific runtime by globbing it under that key.
 - **BYO assertion / mock libraries.** No third-party assertion lib ships as a devDep. CI smoke-tests for the `AssertionError` rendering path use `node:assert` (`tests/test-assert.js`). `tests/manual/test-chai.js` is retained as a hand-runnable visual demo for users who want to see chai integration; users `npm install chai` ad-hoc when exercising it.
 - **`js-check` tooling**: `tsconfig.check.json` runs TypeScript-as-linter (`checkJs` + `noUnusedLocals` + `noUnusedParameters`) over `.js` sources in `bin/` and `src/`. Pure-Node-API only on the source side (`@types/node` is the only types entry); cross-runtime concerns are absorbed by the `dollar-shell` dependency and don't require `@types/bun` / `@types/deno` here.
