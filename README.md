@@ -93,6 +93,7 @@ LLM-friendly documentation is available:
 
 The most recent releases:
 
+- 1.3.0 _Implemented the terminate protocol. Updated dependencies._
 - 1.2.9 _Added `js-check`, Bun + Deno CI, tuned dependabot. Updated dependencies._
 - 1.2.8 _Fixed Bun stdout flush bug. Added GitHub Actions CI. Updated dependencies._
 - 1.2.7 _Added `--help` and `--version` flags. Updated dependencies._

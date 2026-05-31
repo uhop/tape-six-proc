@@ -141,7 +141,7 @@ export default class TestWorker extends EventServer {
     if (!task || task.terminating) return;
     task.terminating = true;
     this.#sendTerminate(task.worker, reason);
-    task.graceTimer = setTimeout(() => this.#kill(id), this.graceTimeout);
+    task.graceTimer = setTimeout(() => this.#kill(id), /** @type {*} */ (this).graceTimeout);
   }
   async #sendTerminate(worker, reason) {
     const stdin = worker.stdin;
