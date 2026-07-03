@@ -7,7 +7,7 @@
 This project uses a git submodule (wiki):
 
 ```bash
-git clone --recursive git@github.com:uhop/tape-six-proc.git
+git clone --recursive https://github.com/uhop/tape-six-proc.git
 cd tape-six-proc
 npm install
 ```
@@ -43,8 +43,9 @@ tape-six-proc/
 │   └── manual/           # Manual test files (hand-runnable demos; `tests/manual/test-chai.js` requires user-installed chai)
 ├── wiki/                 # GitHub wiki documentation (submodule)
 ├── .github/
-│   ├── workflows/        # CI: separate jobs for Node × {ubuntu, windows, macOS} × {20, 22, 24, 25}, Bun × OS, Deno × OS
+│   ├── workflows/        # CI: separate jobs for Node × {ubuntu, windows, macOS} × {22, 24, 26}, Bun × OS, Deno × OS
 │   └── dependabot.yml    # Tuned: grouped updates + `versioning-strategy: increase-if-necessary` (PRs only on out-of-range bumps)
+├── ARCHITECTURE.md       # Internal layout & control flow (authoring-side doc)
 ├── README.md
 └── LICENSE
 ```
@@ -93,7 +94,7 @@ test('example', t => {
 
 - Do not add dependencies unless absolutely necessary.
 - Do not modify or delete test expectations without understanding why they changed.
-- Do not add comments or remove comments unless explicitly asked.
+- **No comments that narrate the code.** Don't write a comment that restates _what_ the code does. Allowed, each as the shortest possible marker: JSDoc when requested or required; a reference for a non-trivial algorithm; a non-trivial _decision_ or constraint — _why_ it's this way, including footgun/ordering caveats that have a real reason. The bar is _why_, never _what_. Strip narrating comments opportunistically in files you're already editing.
 - The `--self` flag prints the path to `tape6-proc.js` for use in cross-runtime scripts (Bun, Deno).
 - The `--runFileArgs` (`-r`) flag passes extra arguments to the spawned interpreter (mainly for Deno permissions).
 - Wiki documentation lives in the `wiki/` submodule.

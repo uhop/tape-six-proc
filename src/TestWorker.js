@@ -17,7 +17,7 @@ const baseName = pathToFileURL(process.cwd() + sep);
 
 const encoder = new TextEncoder();
 
-export default class TestWorker extends EventServer {
+export class TestWorker extends EventServer {
   constructor(reporter, numberOfTasks, options) {
     super(reporter, numberOfTasks, options);
     this.counter = 0;
@@ -165,3 +165,5 @@ export default class TestWorker extends EventServer {
     }
   }
 }
+
+export default TestWorker;
