@@ -31,9 +31,7 @@ export class TestWorker extends EventServer {
       worker = spawn(
         [currentExecPath(), ...runFileArgs, ...self.options.runFileArgs, fileURLToPath(testName)],
         {
-          // stdin is the control channel: the parent writes a line-delimited
-          // `terminate` and ends the stream to drive the child's exit. See
-          // dev-docs/worker-control-channel.md (tape-six).
+          // stdin is the control channel — see dev-docs/worker-control-channel.md (tape-six)
           stdin: 'pipe',
           stdout: 'pipe',
           stderr: 'pipe',
@@ -52,9 +50,6 @@ export class TestWorker extends EventServer {
           }
         }
       );
-    // Per-task control-plane state. `endSeen` keys completion off *reading* the
-    // child's top-level `end` (not racing the child's own exit); `terminating`
-    // makes destroyTask idempotent; `graceTimer` is the force-kill backstop.
     const task = {worker, endSeen: false, terminating: false, graceTimer: null};
     self.idToWorker[id] = task;
     const stdoutDeferred = makeDeferred();
@@ -73,9 +68,8 @@ export class TestWorker extends EventServer {
                 throw error;
               }
             }
-            // Normal completion: the parent has consumed the top-level `end`.
-            // Tell the child to exit (drain + EOF its control channel) — this is
-            // the parent-driven exit that closes the Bun flush race.
+            // parent-driven exit: the child exits only after its `end` was read —
+            // closes the Bun stdout-flush race
             if (msg && msg.type === 'end' && msg.test === 0) {
               task.endSeen = true;
               self.destroyTask(id, 'done');
@@ -106,8 +100,7 @@ export class TestWorker extends EventServer {
         clearTimeout(task.graceTimer);
         task.graceTimer = null;
       }
-      // A premature exit (no top-level `end` read) is a crash or a force-killed
-      // hung child — surface it, unless a failure was already reported.
+      // no `end` read — the child crashed or was force-killed while hung
       if (!task.endSeen && (!self.reporter.state || !self.reporter.state.failed)) {
         const reason = [];
         if (worker.exitCode) {
@@ -132,10 +125,8 @@ export class TestWorker extends EventServer {
     });
     return id;
   }
-  // Deliver `terminate` to one child: write the line-delimited command, then
-  // EOF the control channel. The child drains a running test (reporter
-  // .terminate() — cleanup hooks run) and exits on its own; the graceTimeout
-  // backstop force-kills a test that won't drain. Idempotent per task.
+  // the child drains a running test (cleanup hooks run) and exits on its own;
+  // the graceTimeout backstop force-kills one that won't drain
   destroyTask(id, reason = 'done') {
     const task = this.idToWorker[id];
     if (!task || task.terminating) return;
