@@ -50,6 +50,7 @@
   "github": "http://github.com/uhop/tape-six-proc",
   "llms": "https://raw.githubusercontent.com/uhop/tape-six-proc/master/llms.txt",
   "llmsFull": "https://raw.githubusercontent.com/uhop/tape-six-proc/master/llms-full.txt",
+  "types": "./src/TestWorker.d.ts",
   "files": [
     "bin",
     "src",
@@ -58,7 +59,7 @@
   ],
   "dependencies": {
     "dollar-shell": "^1.2.1",
-    "tape-six": "^1.12.0"
+    "tape-six": "^1.13.0"
   },
   "tape6": {
     "tests": [

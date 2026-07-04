@@ -11,7 +11,7 @@ tape-six-proc/
 ├── bin/
 │   ├── tape6-proc.js     # CLI entry point (--self flag or delegates to tape6-proc-node.js)
 │   └── tape6-proc-node.js # Main CLI: delegates to tape-six config utilities, runs TestWorker
-├── src/
+├── src/                  # each module is a .js + .d.ts sidecar pair (types + JSDoc live in the .d.ts)
 │   ├── TestWorker.js     # TestWorker class: spawns children, pipes stdout/stderr, drives the control channel
 │   └── streams/
 │       ├── lines.js                # TransformStream: splits text into lines
@@ -34,6 +34,10 @@ Per child process: `stdout → TextDecoderStream → lines → parse-prefixed-js
 ## Control plane (worker control channel)
 
 The child is spawned with `stdin: 'pipe'` — stdin is the control channel. To stop a worker the parent writes a line-delimited `terminate` command and EOFs stdin; the child-side listener (part of tape-six: `src/utils/control-channel.js`, enabled by `TAPE6_CONTROL`) drains a running test through `reporter.terminate()` — its `t.signal` fires and cleanup hooks run — then exits. Completion is keyed off **reading the child's top-level `end`**, not racing the child's own exit: the child exits parent-driven after `end` has been consumed, which also closes the Bun stdout-flush race. A child that won't drain within `TAPE6_GRACE_TIMEOUT` (default 5000 ms) is force-killed (`SIGTERM`); a premature exit with no `end` is reported as an error. This is what lets `failOnce` (flag `O`) stop in-flight workers and enables the per-worker wall-clock deadline `TAPE6_WORKER_TIMEOUT`.
+
+## Types
+
+Every `src/` module ships a `.d.ts` sidecar carrying its types and JSDoc (the sole source of truth — `.js` files stay JSDoc-free); each `.js` opens with a `// @ts-self-types="./<name>.d.ts"` directive (honored by Deno; TypeScript resolves sidecars by adjacency). `TestWorker.d.ts` builds on tape-six's `EventServer.d.ts` and augments its deliberately open options bag with the keys the worker reads (`flags`, `runFileArgs`), which keeps `TestWorker.js` cast-free under `js-check`. `package.json#types` points at `src/TestWorker.d.ts`.
 
 ## Cross-runtime notes
 

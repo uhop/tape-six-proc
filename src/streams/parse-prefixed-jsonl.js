@@ -1,3 +1,5 @@
+// @ts-self-types="./parse-prefixed-jsonl.d.ts"
+
 export const parse = (prefix, type = 'stdout') => {
   let rest = '';
   let haveRest = false;

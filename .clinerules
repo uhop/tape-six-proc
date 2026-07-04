@@ -34,7 +34,7 @@ tape-six-proc/
 ├── bin/
 │   ├── tape6-proc.js     # CLI entry point (--self flag or delegates to tape6-proc-node.js)
 │   └── tape6-proc-node.js # Main CLI: delegates to tape-six config utilities, runs TestWorker
-├── src/
+├── src/                  # each module is a .js + .d.ts sidecar pair (types + JSDoc live in the .d.ts)
 │   ├── TestWorker.js     # TestWorker class: spawns child processes, pipes stdout/stderr
 │   └── streams/
 │       ├── lines.js              # TransformStream: splits text into lines
@@ -55,6 +55,7 @@ tape-six-proc/
 
 - **ES modules** throughout (`"type": "module"` in package.json).
 - **No transpilation** — code runs directly in all target runtimes. TypeScript test files (`.ts`) are also supported natively by modern Node, Deno, and Bun.
+- **Typed via `.d.ts` sidecars** — every `src/` module is a `.js` + `.d.ts` pair. The `.d.ts` carries the types and JSDoc as the sole source of truth (`.js` files carry no JSDoc); each `.js` starts with a `// @ts-self-types="./<name>.d.ts"` directive (honored by Deno; TypeScript resolves sidecars by adjacency). A new `src/` module needs both files. `package.json#types` points at `src/TestWorker.d.ts`.
 - **Prettier** for formatting (see `.prettierrc`).
 - Semicolons — default Prettier behavior (see `.prettierrc`).
 - Imports at the top of files, using `import` syntax.
@@ -102,5 +103,5 @@ test('example', t => {
 - Environment variables use the `TAPE6_` prefix (shared with `tape-six`). The control-channel tunables are `TAPE6_GRACE_TIMEOUT` (drain budget before force-kill, default 5000 ms) and `TAPE6_WORKER_TIMEOUT` (per-worker wall-clock deadline, default 0 = off); both are resolved by tape-six's `config.js` and inherited here via `getOptions`.
 - Configuration is read from `tape6.json` or the `"tape6"` section of `package.json` (same as `tape-six`). Per-runtime subsections (`tape6.node` / `tape6.bun` / `tape6.deno` / `tape6.cli` / `tape6.browser`) are auto-resolved via tape-six's `runtime.name` detection — pin a test file to a specific runtime by globbing it under that key.
 - **BYO assertion / mock libraries.** No third-party assertion lib ships as a devDep. CI smoke-tests for the `AssertionError` rendering path use `node:assert` (`tests/test-assert.js`). `tests/manual/test-chai.js` is retained as a hand-runnable visual demo for users who want to see chai integration; users `npm install chai` ad-hoc when exercising it.
-- **`js-check` tooling**: `tsconfig.check.json` runs TypeScript-as-linter (`checkJs` + `noUnusedLocals` + `noUnusedParameters`) over `.js` sources in `bin/` and `src/`. Pure-Node-API only on the source side (`@types/node` is the only types entry); cross-runtime concerns are absorbed by the `dollar-shell` dependency and don't require `@types/bun` / `@types/deno` here.
+- **`js-check` tooling**: `tsconfig.check.json` runs TypeScript-as-linter (`checkJs` + `noUnusedLocals` + `noUnusedParameters`) over `.js` sources in `bin/` and `src/`; the `.d.ts` sidecars join the same program via import adjacency, so they are validated too. `src/TestWorker.d.ts` augments tape-six's deliberately open `EventServerOptions` bag with the keys the worker reads (`flags`, `runFileArgs`) — that augmentation is what keeps `TestWorker.js` cast-free under `checkJs`. Pure-Node-API only on the source side (`@types/node` is the only types entry); cross-runtime concerns are absorbed by the `dollar-shell` dependency and don't require `@types/bun` / `@types/deno` here.
 - **Dependabot** is tuned to skip PRs when a new version satisfies the declared caret range (only major bumps fire) and to bundle all matching updates per ecosystem into one PR per cycle. Security advisories are a separate, always-on channel and continue to fire regardless.

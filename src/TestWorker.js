@@ -1,3 +1,5 @@
+// @ts-self-types="./TestWorker.d.ts"
+
 import process from 'node:process';
 import {sep} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
@@ -25,7 +27,7 @@ export class TestWorker extends EventServer {
     this.prefix = crypto.randomUUID();
   }
   makeTask(fileName) {
-    const self = /** @type {*} */ (this);
+    const self = this;
     const testName = new URL(fileName, baseName),
       id = String(++self.counter),
       worker = spawn(
@@ -132,7 +134,7 @@ export class TestWorker extends EventServer {
     if (!task || task.terminating) return;
     task.terminating = true;
     this.#sendTerminate(task.worker, reason);
-    task.graceTimer = setTimeout(() => this.#kill(id), /** @type {*} */ (this).graceTimeout);
+    task.graceTimer = setTimeout(() => this.#kill(id), this.graceTimeout);
   }
   async #sendTerminate(worker, reason) {
     const stdin = worker.stdin;

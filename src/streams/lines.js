@@ -1,3 +1,5 @@
+// @ts-self-types="./lines.d.ts"
+
 export const lines = () => {
   let rest = '';
   return new TransformStream({
