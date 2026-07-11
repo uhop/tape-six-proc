@@ -78,7 +78,7 @@ export class TestWorker extends EventServer {
             }
           },
           close() {
-            stdoutDeferred.resolve();
+            stdoutDeferred.resolve(undefined);
           }
         })
       );
@@ -93,7 +93,7 @@ export class TestWorker extends EventServer {
             self.report(id, msg);
           },
           close() {
-            stderrDeferred.resolve();
+            stderrDeferred.resolve(undefined);
           }
         })
       );
@@ -113,6 +113,8 @@ export class TestWorker extends EventServer {
         }
         if (reason.length) {
           self.report(id, {
+            // State.preprocess defaults a missing type to 'assert'; explicit for the typed TestEvent
+            type: 'assert',
             name: 'process has failed, ' + reason.join(', '),
             test: 0,
             marker: new Error(),

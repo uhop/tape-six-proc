@@ -6,22 +6,6 @@ import EventServer, {
   EventServerReporter
 } from 'tape-six/utils/EventServer.js';
 
-/**
- * The base options bag is deliberately open (`[key: string]: unknown` —
- * "runners pass their own keys through"); merging the keys `TestWorker`
- * reads gives them real types on `this.options` for `js-check` and
- * plain-JS consumers. The CLI passes its flag bag (`options.flags` from
- * `getOptions()`) through verbatim.
- */
-declare module 'tape-six/utils/EventServer.js' {
-  interface EventServerOptions {
-    /** Reporter flag string forwarded to workers as `TAPE6_FLAGS`. */
-    flags?: string;
-    /** Extra interpreter arguments for spawned workers (`--runFileArgs`). */
-    runFileArgs?: string[];
-  }
-}
-
 /** Per-worker bookkeeping kept in `idToWorker`. */
 export interface WorkerTask {
   worker: Subprocess;

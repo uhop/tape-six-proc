@@ -107,7 +107,7 @@ const main = async () => {
   reporter.report({type: 'test', test: 0});
 
   await new Promise(resolve => {
-    worker.done = () => resolve();
+    worker.done = () => resolve(undefined);
     worker.execute(files);
   });
 
