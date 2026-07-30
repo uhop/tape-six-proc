@@ -48,8 +48,6 @@
   },
   "homepage": "https://github.com/uhop/tape-six-proc#readme",
   "github": "http://github.com/uhop/tape-six-proc",
-  "llms": "https://raw.githubusercontent.com/uhop/tape-six-proc/master/llms.txt",
-  "llmsFull": "https://raw.githubusercontent.com/uhop/tape-six-proc/master/llms-full.txt",
   "types": "./src/TestWorker.d.ts",
   "files": [
     "bin",
@@ -58,8 +56,8 @@
     "llms-full.txt"
   ],
   "dependencies": {
-    "dollar-shell": "^1.2.1",
-    "tape-six": "^1.15.0"
+    "dollar-shell": "^1.3.0",
+    "tape-six": "^1.16.2"
   },
   "tape6": {
     "tests": [
@@ -67,8 +65,8 @@
     ]
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "prettier": "^3.9.5",
+    "@types/node": "^26.1.2",
+    "prettier": "^3.9.6",
     "typescript": "^7.0.2"
   }
 }

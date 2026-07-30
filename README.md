@@ -71,7 +71,7 @@ npm test
 
 ## Docs
 
-See the [wiki](https://github.com/uhop/tape-six-proc/wiki) for full documentation.
+Full documentation is in the **[wiki](https://github.com/uhop/tape-six-proc/wiki)** &mdash; browse the [index](https://github.com/uhop/tape-six-proc/wiki/Home), or [search it](https://uhop.github.io/wiki-search/app/?wiki=uhop/tape-six-proc) by name.
 `tape-six` has its own [wiki](https://github.com/uhop/tape-six/wiki).
 
 `tape-six-proc` uses the same test configuration and CLI conventions as `tape-six`.

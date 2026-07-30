@@ -7,7 +7,7 @@ Thank you for your interest in contributing!
 This project uses a git submodule for the wiki. Clone and install:
 
 ```bash
-git clone --recursive git@github.com:uhop/tape-six-proc.git
+git clone --recursive https://github.com/uhop/tape-six-proc.git
 cd tape-six-proc
 npm install
 ```
@@ -24,6 +24,13 @@ npm install
 - TypeScript test files (`.ts`) are supported natively — no transpilation needed.
 - Formatted with Prettier — run `npm run lint:fix` before committing.
 - No unnecessary dependencies.
+
+## License
+
+This project is distributed under the [BSD-3-Clause license](./LICENSE).
+External contributions are accepted only under licenses compatible with
+BSD-3-Clause; submissions under fundamentally incompatible licenses cannot
+be merged.
 
 ## AI agents
 
