@@ -2,6 +2,8 @@
 
 > Helper for [tape-six](https://github.com/uhop/tape-six) that runs test files in separate processes instead of worker threads. Works with Node, Deno, and Bun. Supports TypeScript natively without transpilation.
 
+> **Deprecated:** `tape6-proc` ships with tape-six since 1.18.0. Remove `tape-six-proc` from your dependencies and update `tape-six` to `^1.18.0` in the same change; the command and scripts stay the same. Documentation: https://github.com/uhop/tape-six/wiki/Utility-%E2%80%90-tape6-proc
+
 ## Install
 
 ```bash

@@ -2,6 +2,8 @@
 
 > `tape-six-proc` is a helper for [tape-six](https://github.com/uhop/tape-six) that runs test files in separate processes (subprocesses) instead of worker threads. It works with Node, Deno, and Bun, and supports TypeScript natively without transpilation. The npm package name is `tape-six-proc` and the CLI command is `tape6-proc`.
 
+> **Deprecated (2026-10-22):** `tape6-proc` ships with tape-six since 1.18.0 (`src/runners/proc/`, `bin/tape6-proc.js`), so make runner changes in https://github.com/uhop/tape-six. To migrate a consumer, remove the `tape-six-proc` devDependency and update `tape-six` to `^1.18.0` in the same change; the command and the scripts stay the same.
+
 ## Setup
 
 This project uses a git submodule (wiki):

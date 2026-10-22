@@ -3,6 +3,8 @@
 [npm-img]: https://img.shields.io/npm/v/tape-six-proc.svg
 [npm-url]: https://npmjs.org/package/tape-six-proc
 
+> **Deprecated:** `tape6-proc` ships with [tape-six](https://www.npmjs.com/package/tape-six) since 1.18.0, so this package is no longer needed. To move, remove `tape-six-proc` from your dependencies and update `tape-six` to `^1.18.0` in the same change. The `tape6-proc` command, its options, and your scripts stay the same, and 1.18.0 carries the exit-status fixes made here after 1.3.1. The documentation is now [tape6-proc](https://github.com/uhop/tape-six/wiki/Utility-%E2%80%90-tape6-proc) in the tape-six wiki.
+
 `tape-six-proc` is a helper for [tape-six](https://www.npmjs.com/package/tape-six)
 to run tests in separate processes. It works with Node, Deno, and Bun,
 and supports TypeScript natively without transpilation.

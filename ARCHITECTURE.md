@@ -2,6 +2,8 @@
 
 `tape-six-proc` is the subprocess worker provider for [tape-six](https://github.com/uhop/tape-six): it runs each test file in its own child process for full process isolation, on Node, Deno, and Bun, with native TypeScript support (no transpilation). The only runtime dependency is `tape-six` (the core test library); processes are spawned through `node:child_process`, which Node, Deno, and Bun all implement.
 
+> **Deprecated (2026-10-22):** this code moved to tape-six 1.18.0 as `src/runners/proc/` and `bin/tape6-proc.js`; tape-six's `ARCHITECTURE.md` describes it there.
+
 ## Project layout
 
 ```
