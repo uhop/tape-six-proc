@@ -52,7 +52,7 @@ export class TestWorker extends EventServer {
           }
         }
       );
-    const task = {worker, endSeen: false, terminating: false, graceTimer: null};
+    const task = {worker, started: false, endSeen: false, terminating: false, graceTimer: null};
     self.idToWorker[id] = task;
     const stdoutDeferred = makeDeferred();
     worker.stdout
@@ -70,6 +70,7 @@ export class TestWorker extends EventServer {
                 throw error;
               }
             }
+            if (msg && msg.type === 'test') task.started = true;
             // parent-driven exit: the child exits only after its `end` was read —
             // closes the Bun stdout-flush race
             if (msg && msg.type === 'end' && msg.test === 0) {
@@ -103,26 +104,39 @@ export class TestWorker extends EventServer {
         task.graceTimer = null;
       }
       // no `end` read — the child crashed or was force-killed while hung
-      if (!task.endSeen && (!self.reporter.state || !self.reporter.state.failed)) {
-        const reason = [];
-        if (worker.exitCode) {
-          reason.push(`exit code: ${worker.exitCode}`);
+      if (!task.endSeen) {
+        // stopped by failOnce or a bail-out: not this file's failure
+        if (!self.stopRequested) {
+          const reason = [];
+          // `terminate` without a stop is the worker deadline; the child's watchdog
+          // can exit 0 before the kill
+          if (task.terminating) {
+            reason.push('timed out');
+          }
+          if (worker.exitCode) {
+            reason.push(`exit code: ${worker.exitCode}`);
+          }
+          if (worker.signalCode) {
+            reason.push(`signal: ${worker.signalCode}`);
+          }
+          // a file with no tests also exits 0 without `end`, but it never sends a `test` event
+          if (!reason.length && task.started) {
+            reason.push('exited mid-test');
+          }
+          if (reason.length) {
+            self.report(id, {
+              // State.preprocess defaults a missing type to 'assert'; explicit for the typed TestEvent
+              type: 'assert',
+              name: 'process has failed, ' + reason.join(', '),
+              test: 0,
+              marker: new Error(),
+              operator: 'error',
+              fail: true
+            });
+          }
         }
-        if (worker.signalCode) {
-          reason.push(`signal: ${worker.signalCode}`);
-        }
-        if (reason.length) {
-          self.report(id, {
-            // State.preprocess defaults a missing type to 'assert'; explicit for the typed TestEvent
-            type: 'assert',
-            name: 'process has failed, ' + reason.join(', '),
-            test: 0,
-            marker: new Error(),
-            operator: 'error',
-            fail: true
-          });
-          self.report(id, {type: 'terminated', test: 0, name: 'FILE: /' + fileName});
-        }
+        // closes the tests the child left open, or the next file's events nest inside them
+        self.report(id, {type: 'terminated', test: 0, name: 'FILE: /' + fileName});
       }
       delete self.idToWorker[id];
       self.close(id);

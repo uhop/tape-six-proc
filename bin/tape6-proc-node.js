@@ -111,7 +111,8 @@ const main = async () => {
     worker.execute(files);
   });
 
-  const hasFailed = reporter.state && reporter.state.failed > 0;
+  // stopRequested is raised only by a failure or a bail-out, and a bail-out fails no assertion
+  const hasFailed = worker.stopRequested || (reporter.state && reporter.state.failed > 0);
 
   reporter.report({
     type: 'end',

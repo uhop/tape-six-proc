@@ -9,6 +9,8 @@ import EventServer, {
 /** Per-worker bookkeeping kept in `idToWorker`. */
 export interface WorkerTask {
   worker: Subprocess;
+  /** A `test` event was read: an exit without `end` after it quit mid-test. */
+  started: boolean;
   /** The child's final `end` event was read — a clean parent-driven exit. */
   endSeen: boolean;
   /** `terminate` already sent; suppresses duplicate teardown. */

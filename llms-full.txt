@@ -175,7 +175,7 @@ Delegates argument parsing, reporter setup, and file resolution to `tape-six/uti
 2. Calls `initReporter()` to select the reporter: TTY (default for terminals), TAP, JSONL, or Min (based on environment variables).
 3. Calls `initFiles()` to resolve test files from configuration or CLI patterns.
 4. Creates a `TestWorker` instance and executes all test files.
-5. Reports final results and exits with code 0 (success) or 1 (failures).
+5. Reports final results and exits with code 0 (success) or 1 (a failure or a bail-out).
 
 ### TestWorker (`src/TestWorker.js`)
 
@@ -211,7 +211,7 @@ process.stderr → TextDecoderStream → lines → wrap-lines → report
 3. **Normal completion** is keyed off the parent *reading* that top-level `end` (not racing the child's exit). The parent then issues `terminate` (drain + EOF stdin); the child exits and the next queued file starts. Because the child exits only after `end` has been consumed, the Bun stdout-flush bug (a dropped tail on self-exit) cannot occur.
 4. **Abort** (`failOnce` / bail, or a `TAPE6_WORKER_TIMEOUT` deadline) issues `terminate` to every in-flight worker. Each drains its running test through `reporter.terminate()` — `t.signal` fires, `finally` / `afterEach` / `afterAll` run — then exits, emitting its `end` as usual.
 5. **Force-kill backstop.** A worker that does not exit within `TAPE6_GRACE_TIMEOUT` of a `terminate` (a test hung in a non-signal-aware `await`) is killed with `worker.kill()` (SIGTERM).
-6. A premature exit — the child closes stdout without a top-level `end` (crash, bad import, force-kill) — is reported as an error with a `{type: 'terminated'}` event, including the exit code / signal, unless a failure was already reported.
+6. A premature exit — the child closes stdout without a top-level `end` (crash, bad import, force-kill, or a deadline the child's own watchdog ends with exit code 0) — always gets a `{type: 'terminated'}` event, which closes the tests the child left open so a later file's events do not nest inside them. It is also reported as an error (`process has failed`, then `timed out` after a deadline, the exit code, the signal, or `exited mid-test`) when the child exited with a non-zero code, by a signal, after a deadline, or with code 0 after it had sent a `test` event (a file with no tests sends none and passes), unless `failOnce` or a bail-out stopped the run, since those stop workers on purpose.
 
 ## Dependencies
 

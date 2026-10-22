@@ -17,7 +17,7 @@ tape-six-proc/
 │       ├── lines.js                # TransformStream: splits text into lines
 │       ├── parse-prefixed-jsonl.js # TransformStream: parses prefixed JSONL from stdout
 │       └── wrap-lines.js           # TransformStream: wraps plain lines as {type, name} objects
-├── tests/                # Automated tests (test-*.js); tests/manual/ holds hand-runnable demos
+├── tests/                # Automated tests (test-*.js); tests/fixtures/ holds the files test-crash.js runs, tests/manual/ hand-runnable demos
 └── wiki/                 # GitHub wiki documentation (submodule)
 ```
 
@@ -33,7 +33,7 @@ Per child process: `stdout → TextDecoderStream → lines → parse-prefixed-js
 
 ## Control plane (worker control channel)
 
-The child is spawned with `stdin: 'pipe'` — stdin is the control channel. To stop a worker the parent writes a line-delimited `terminate` command and EOFs stdin; the child-side listener (part of tape-six: `src/utils/control-channel.js`, enabled by `TAPE6_CONTROL`) drains a running test through `reporter.terminate()` — its `t.signal` fires and cleanup hooks run — then exits. Completion is keyed off **reading the child's top-level `end`**, not racing the child's own exit: the child exits parent-driven after `end` has been consumed, which also closes the Bun stdout-flush race. A child that won't drain within `TAPE6_GRACE_TIMEOUT` (default 5000 ms) is force-killed (`SIGTERM`); a premature exit with no `end` is reported as an error. This is what lets `failOnce` (flag `O`) stop in-flight workers and enables the per-worker wall-clock deadline `TAPE6_WORKER_TIMEOUT`.
+The child is spawned with `stdin: 'pipe'` — stdin is the control channel. To stop a worker the parent writes a line-delimited `terminate` command and EOFs stdin; the child-side listener (part of tape-six: `src/utils/control-channel.js`, enabled by `TAPE6_CONTROL`) drains a running test through `reporter.terminate()` — its `t.signal` fires and cleanup hooks run — then exits. Completion is keyed off **reading the child's top-level `end`**, not racing the child's own exit: the child exits parent-driven after `end` has been consumed, which also closes the Bun stdout-flush race. A child that won't drain within `TAPE6_GRACE_TIMEOUT` (default 5000 ms) is force-killed (`SIGTERM`); a premature exit with no `end` is reported as an error when the child exited with a non-zero code, by a signal, after its deadline (`timed out`), or with code 0 after it had started a test (`exited mid-test`; a file with no tests sends no events and passes), unless `failOnce` or a bail-out stopped the run. Either way it gets a `terminated` event that closes the tests the child left open: without it a later file's events nest inside them, and the run ends with no summary and exit status 0. This is what lets `failOnce` (flag `O`) stop in-flight workers and enables the per-worker wall-clock deadline `TAPE6_WORKER_TIMEOUT`.
 
 ## Types
 

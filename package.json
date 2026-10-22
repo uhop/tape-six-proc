@@ -12,7 +12,7 @@
     "js-check": "tsc --project tsconfig.check.json",
     "test": "node ./bin/tape6-proc.js --flags FO",
     "test:bun": "bun run ./bin/tape6-proc.js --flags FO",
-    "test:deno": "deno run -A ./bin/tape6-proc.js -r --allow-read -r --allow-env --flags FO"
+    "test:deno": "deno run -A ./bin/tape6-proc.js -r --allow-read -r --allow-env -r --allow-write -r --allow-run --flags FO"
   },
   "keywords": [
     "tap",
