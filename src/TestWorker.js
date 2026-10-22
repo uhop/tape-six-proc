@@ -4,8 +4,8 @@ import process from 'node:process';
 import {sep} from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
-
-import {spawn, currentExecPath, runFileArgs} from 'dollar-shell';
+import {spawn} from 'node:child_process';
+import {Readable, Writable} from 'node:stream';
 
 import {isStopTest} from 'tape-six/State.js';
 import EventServer from 'tape-six/utils/EventServer.js';
@@ -19,6 +19,8 @@ const baseName = pathToFileURL(process.cwd() + sep);
 
 const encoder = new TextEncoder();
 
+const runFileArgs = process.versions.bun || process.versions.deno ? ['run'] : [];
+
 export class TestWorker extends EventServer {
   constructor(reporter, numberOfTasks, options) {
     super(reporter, numberOfTasks, options);
@@ -31,12 +33,11 @@ export class TestWorker extends EventServer {
     const testName = new URL(fileName, baseName),
       id = String(++self.counter),
       worker = spawn(
-        [currentExecPath(), ...runFileArgs, ...self.options.runFileArgs, fileURLToPath(testName)],
+        process.execPath,
+        [...runFileArgs, ...self.options.runFileArgs, fileURLToPath(testName)],
         {
           // stdin is the control channel — see dev-docs/worker-control-channel.md (tape-six)
-          stdin: 'pipe',
-          stdout: 'pipe',
-          stderr: 'pipe',
+          stdio: 'pipe',
           env: {
             ...process.env,
             TAPE6_FLAGS: self.options.flags,
@@ -52,10 +53,14 @@ export class TestWorker extends EventServer {
           }
         }
       );
+    const exited = new Promise((resolve, reject) => {
+      worker.on('exit', resolve);
+      worker.on('error', reject);
+    });
     const task = {worker, started: false, endSeen: false, terminating: false, graceTimer: null};
     self.idToWorker[id] = task;
     const stdoutDeferred = makeDeferred();
-    worker.stdout
+    Readable.toWeb(worker.stdout)
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
       .pipeThrough(parse(self.prefix))
@@ -84,7 +89,7 @@ export class TestWorker extends EventServer {
         })
       );
     const stderrDeferred = makeDeferred();
-    worker.stderr
+    Readable.toWeb(worker.stderr)
       .pipeThrough(new TextDecoderStream())
       .pipeThrough(lines())
       .pipeThrough(wrap('stderr'))
@@ -98,7 +103,7 @@ export class TestWorker extends EventServer {
           }
         })
       );
-    Promise.allSettled([worker.exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => {
+    Promise.allSettled([exited, stdoutDeferred.promise, stderrDeferred.promise]).then(() => {
       if (task.graceTimer) {
         clearTimeout(task.graceTimer);
         task.graceTimer = null;
@@ -153,14 +158,13 @@ export class TestWorker extends EventServer {
     task.graceTimer = setTimeout(() => this.#kill(id), this.graceTimeout);
   }
   async #sendTerminate(worker, reason) {
-    const stdin = worker.stdin;
-    if (!stdin) return;
+    if (!worker.stdin) return;
     try {
-      const writer = stdin.getWriter();
+      const writer = Writable.toWeb(worker.stdin).getWriter();
       await writer.write(encoder.encode(JSON.stringify({cmd: 'terminate', reason}) + '\n'));
       await writer.close();
-    } catch (e) {
-      void e; // child already gone / pipe closed
+    } catch {
+      // child already gone / pipe closed
     }
   }
   #kill(id) {
@@ -169,9 +173,7 @@ export class TestWorker extends EventServer {
     task.graceTimer = null;
     try {
       task.worker.kill();
-    } catch (e) {
-      void e;
-    }
+    } catch {}
   }
 }
 

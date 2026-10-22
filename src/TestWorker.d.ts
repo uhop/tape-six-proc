@@ -1,4 +1,4 @@
-import {Subprocess} from 'dollar-shell';
+import {ChildProcess} from 'node:child_process';
 
 import EventServer, {
   DestroyReason,
@@ -8,7 +8,7 @@ import EventServer, {
 
 /** Per-worker bookkeeping kept in `idToWorker`. */
 export interface WorkerTask {
-  worker: Subprocess;
+  worker: ChildProcess;
   /** A `test` event was read: an exit without `end` after it quit mid-test. */
   started: boolean;
   /** The child's final `end` event was read — a clean parent-driven exit. */
@@ -21,7 +21,7 @@ export interface WorkerTask {
 
 /**
  * Subprocess transport for tape-six's `EventServer`: runs each test file in
- * its own child process (Node, Bun, or Deno — via `dollar-shell`),
+ * its own child process (Node, Bun, or Deno — via `node:child_process`),
  * demultiplexes prefixed-JSONL test events from stdout, wraps stderr lines
  * as events, and drives the stdin control channel — a cooperative
  * `terminate` backstopped by a `graceTimeout` force-kill. See

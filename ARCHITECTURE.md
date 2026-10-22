@@ -1,6 +1,6 @@
 # Architecture
 
-`tape-six-proc` is the subprocess worker provider for [tape-six](https://github.com/uhop/tape-six): it runs each test file in its own child process for full process isolation, on Node, Deno, and Bun, with native TypeScript support (no transpilation). Runtime dependencies are minimal by design: `tape-six` (the core test library) and `dollar-shell` (cross-runtime process spawning).
+`tape-six-proc` is the subprocess worker provider for [tape-six](https://github.com/uhop/tape-six): it runs each test file in its own child process for full process isolation, on Node, Deno, and Bun, with native TypeScript support (no transpilation). The only runtime dependency is `tape-six` (the core test library); processes are spawned through `node:child_process`, which Node, Deno, and Bun all implement.
 
 ## Project layout
 
@@ -25,7 +25,7 @@ tape-six-proc/
 
 - `bin/tape6-proc.js` is the CLI entry point. With `--self` it prints its own path (for cross-runtime usage); otherwise it delegates to `bin/tape6-proc-node.js`.
 - `bin/tape6-proc-node.js` delegates argument parsing, reporter setup, and file resolution to `tape-six/utils/config.js` (`getOptions`, `initReporter`, `initFiles`, `showInfo`). It adds `--runFileArgs` (`-r`), `--info`, `--help` (`-h`), and `--version` (`-v`) options, then runs tests via `TestWorker`.
-- `TestWorker` (`src/TestWorker.js`) extends `EventServer` from `tape-six`. It spawns each test file as a child process using `dollar-shell` (`spawn`, `currentExecPath`, `runFileArgs`).
+- `TestWorker` (`src/TestWorker.js`) extends `EventServer` from `tape-six`. It spawns each test file as a child process through `node:child_process`: `process.execPath`, with `run` before the file on Bun and Deno, and the pipes wrapped as Web streams by `Readable.toWeb` and `Writable.toWeb`.
 
 ## Data plane
 
@@ -41,4 +41,4 @@ Every `src/` module ships a `.d.ts` sidecar carrying its types and JSDoc (the so
 
 ## Cross-runtime notes
 
-There are no `Bun.` / `Deno.` globals in this repo — the runtime-specific spawn surface is absorbed by `dollar-shell`. Sources use Node-API-shaped imports (`node:process`, `node:path`, `node:url`, `node:crypto`) that all three runtimes implement, which is why `tsconfig.check.json` keeps its types array at `["node"]` only.
+There are no `Bun.` / `Deno.` globals in this repo — the one runtime difference left is the `run` argument Bun and Deno need before a file, read from `process.versions`. Sources use Node-API-shaped imports (`node:process`, `node:path`, `node:url`, `node:crypto`, `node:child_process`, `node:stream`) that all three runtimes implement, which is why `tsconfig.check.json` keeps its types array at `["node"]` only.

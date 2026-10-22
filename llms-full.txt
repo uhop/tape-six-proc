@@ -182,7 +182,7 @@ Delegates argument parsing, reporter setup, and file resolution to `tape-six/uti
 Extends `EventServer` from `tape-six`. Manages parallel subprocess execution:
 
 - **`constructor(reporter, numberOfTasks, options)`** — initializes with a reporter, concurrency limit, and options. Generates a UUID prefix for JSONL parsing.
-- **`makeTask(fileName)`** — spawns a child process for a test file using `dollar-shell` (`stdin: 'pipe'` so it can be controlled). Sets up stream pipelines for stdout and stderr, marks completion when the child's top-level `end` is read, and reports premature exits. Returns a task ID.
+- **`makeTask(fileName)`** — spawns a child process for a test file through `node:child_process` (`stdio: 'pipe'`, the pipes wrapped as Web streams by `Readable.toWeb` and `Writable.toWeb`; `stdin` piped so it can be controlled). Sets up stream pipelines for stdout and stderr, marks completion when the child's top-level `end` is read, and reports premature exits. Returns a task ID.
 - **`destroyTask(id, reason)`** — the control-plane terminate. Writes a line-delimited `terminate` command to the child's stdin and EOFs it, then arms a `TAPE6_GRACE_TIMEOUT` deadline after which the child is force-killed (`worker.kill()`, SIGTERM). The base `EventServer` calls it with `reason` `'done'` (the worker finished — read its `end`), `'failOnce'` (a sibling tripped failOnce / bail), or `'timeout'` (the per-worker deadline). Idempotent per task.
 
 ### Stream pipeline
@@ -216,7 +216,6 @@ process.stderr → TextDecoderStream → lines → wrap-lines → report
 ## Dependencies
 
 - **`tape-six`** — the core test library. Imports: `utils/config.js` (`getOptions`, `initFiles`, `initReporter`, `showInfo`, `printFlagOptions`), `test.js` (`getReporter`, `setReporter`), `utils/timer.js`, `State.js`, `utils/EventServer.js`, `utils/makeDeferred.js`. The worker control channel additionally depends on tape-six's child-side listener (`src/utils/control-channel.js`, opened via `TAPE6_CONTROL`) and the `getGraceTimeout` / `getWorkerTimeout` config it injects through `getOptions`, so it requires a tape-six version that ships them.
-- **`dollar-shell`** — cross-runtime process spawning. Imports: `spawn`, `currentExecPath`, `runFileArgs`.
 
 ## Writing tests
 
